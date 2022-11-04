@@ -4,8 +4,7 @@ import { config } from 'dotenv';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GoogleModule } from './google/google.module';
-import { JwtStrategy } from './strategy';
-
+import { JwtStrategy } from './strategy/jwt.strategy';
 
 config();
 

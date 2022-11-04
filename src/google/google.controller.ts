@@ -1,6 +1,5 @@
 import { Controller, Get, Redirect, UseGuards, Request, Response } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { GoogleService } from "./google.service";
 import { GoogleGuard } from "./guard/google.guard";
 
 
