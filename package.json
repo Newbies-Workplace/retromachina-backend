@@ -6,12 +6,9 @@
   "license": "MIT",
   "scripts": {
     "prisma:dev:deploy": "prisma migrate deploy",
-    "db:dev:up": "docker compose up dev-db -d",
-    "db:dev:rm": "docker compose rm dev-db -f -s -v",
-    "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && timeout 4 && npm run prisma:dev:deploy",
+    "prisma:init": "prisma migrate dev && prisma generate",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "prisma:init": "prisma migrate dev && prisma generate",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
