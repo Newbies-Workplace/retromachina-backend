@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id              String @id @default(uuid())
+  name            String
+  scrum_master_id String
+
+  User User? @relation(fields: [scrum_master_id], references: [id])
+
+  TeamUser      TeamUsers[]
+  Task          Task[]
+  Retrospective Retrospective[]
+}
+
+model TeamUsers {
+  team_id String  @id
+  user_id String?
+
+  Team Team? @relation(fields: [team_id], references: [id])
+  User User? @relation(fields: [user_id], references: [id])
+}
+
+model User {
+  id          String @id @default(uuid())
+  nick        String
+  email       String
+  avatar_link String
+  user_type   Role   @default(USER)
+  google_id   String @unique
+
+  TeamUsers TeamUsers[]
+  Team      Team[]
+  Task      Task[]
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  description   String
+  state         TaskState
+  owner_id      String
+  retro_id      String
+  team_id       String
+  retro_card_id String
+
+  User          User?          @relation(fields: [owner_id], references: [id])
+  Team          Team?          @relation(fields: [team_id], references: [id])
+  Retrospective Retrospective? @relation(fields: [retro_id], references: [id])
+}
+
+model Retrospective {
+  id         String   @id @default(uuid())
+  team_id    String
+  date       DateTime
+  is_running Boolean
+
+  Team Team? @relation(fields: [team_id], references: [id])
+
+  Task Task[]
+}
+
+enum Role {
+  USER
+  SCRUM_MASTER
+}
+
+enum TaskState {
+  FREEZED
+  TO_DO
+  IN_PROGRESS
+  DONE
+}
