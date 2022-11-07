@@ -1,13 +1,13 @@
-import { User } from "@prisma/client"
+import { User } from '@prisma/client';
 
 export type Token = {
-    user: User
-}
-  
+  user: User;
+};
+
 export type GoogleUser = {
-    id: string,
-    email: string,
-    firstName: string,
-    lastName: string,
-    picture: string
-}
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  picture: string;
+};

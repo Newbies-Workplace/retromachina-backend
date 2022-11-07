@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  retro-db:
+    image: mariadb:10.7
+    restart: unless-stopped
+    container_name: retro-db
+    volumes:
+      - retro-db:/var/lib/mysql
+    environment:
+      MARIADB_AUTO_UPGRADE: 1
+      MYSQL_ROOT_PASSWORD: retro
+      MYSQL_DATABASE: retro
+    ports:
+      - "3306:3306"
+  retro-service:
+    build:
+      context: ../
+    restart: unless-stopped
+    container_name: retro-service
+    environment:
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_SECRET
+      - JWT_SECRET
+      - DATABASE_URL=mariadb://retro:retro@retro-db:3306/retro?characterEncoding=utf8&useUnicode=true
+      - HOME_PATH=/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - retro-db
+
+volumes:
+  retro-db:
