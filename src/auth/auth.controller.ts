@@ -10,14 +10,15 @@ config();
 
 @Controller('google')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
-    @Get("redirect")
-    @UseGuards(GoogleGuard)
-    @Redirect(process.env.HOME_PATH)
-    async googleAuth(@User() user: GoogleUser, @Response() response) {
-        const token = await this.authService.googleAuth(user);
-        
-        response.cookie('jwtToken', token);
-    }
+  @Get('redirect')
+  @UseGuards(GoogleGuard)
+  @Redirect(process.env.HOME_PATH)
+  async googleAuth(@Request() request, @Response() response) {
+    const user: GoogleUser = request.user;
+    const token = this.authService.googleAuth(user);
+
+    response.cookie('jwtToken', token);
+  }
 }

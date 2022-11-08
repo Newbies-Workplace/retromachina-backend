@@ -7,14 +7,17 @@ import { GoogleUser } from 'src/types';
 config();
 @Injectable()
 export class AuthService {
-    constructor(private jwtService: JwtService, private prismaService: PrismaService ) {}
+  constructor(
+    private jwtService: JwtService,
+    private prismaService: PrismaService,
+  ) {}
 
-    async googleAuth(user: GoogleUser) {
-        let queryUser = await this.prismaService.user.findFirst({
-            where: {
-                google_id: user.id
-            }
-        });
+  async googleAuth(user: GoogleUser) {
+    let queryUser = await this.prismaService.user.findFirst({
+      where: {
+        google_id: user.id,
+      },
+    });
 
         if (!queryUser) {
             queryUser = await this.prismaService.user.create({
