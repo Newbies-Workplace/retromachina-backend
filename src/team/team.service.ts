@@ -14,9 +14,7 @@ export class TeamService {
             }
         })
 
-        if (!teamInfo) {
-            throw new NotFoundException();
-        }
+        if (!teamInfo) throw new NotFoundException();
 
         return {
             id: teamInfo.id,
@@ -25,7 +23,6 @@ export class TeamService {
     }
 
     async createTeam(user: TokenUser, createTeamDto: CreateTeamDto) {
-        console.log(user.id)
         const team = await this.prismaService.team.create({
             data: {
                 name: createTeamDto.name,
@@ -40,11 +37,9 @@ export class TeamService {
                 }
             });
             
-            if (!user) {
-                throw new NotFoundException({
+            if (!user) throw new NotFoundException({
                     missing: email
-                });
-            }
+            });
 
             await this.prismaService.teamUsers.create({
                 data: {

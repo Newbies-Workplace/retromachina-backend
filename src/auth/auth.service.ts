@@ -33,9 +33,6 @@ export class AuthService {
                 email: queryUser.email,
                 google_id: user.id
             }
-        },
-        {
-            secret: process.env.JWT_SECRET
-        });
+        }, { secret: process.env.JWT_SECRET });
     }
 }

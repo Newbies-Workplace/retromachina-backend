@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Team, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenUser } from 'src/types';
@@ -14,9 +14,7 @@ export class UserService {
             }
         });
 
-        if (!userInfo) {
-            throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-        }
+        if (!userInfo) throw new ForbiddenException();
 
         const userTeams = await this.prismaService.teamUsers.findMany({
             where: {

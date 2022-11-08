@@ -2,13 +2,13 @@ export type TokenUser = {
     id: string,
     nick: string,
     email: string,
-    google_id: string
+    google_id: string,
+    isScrum: Boolean
 }
 
-export type Token = {
-    isScrum: Boolean,
-    user: TokenUser
-}
+// export type Token = {
+//     user: TokenUser
+// }
   
 export type GoogleUser = {
     id: string,

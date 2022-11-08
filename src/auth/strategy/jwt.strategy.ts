@@ -2,7 +2,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
-import { Token } from 'src/types';
+import { TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 config();
@@ -17,16 +17,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: Token) {
+  async validate(payload: TokenUser) {
     const user = await this.prismaService.user.findFirst({
         where: {
-            id: payload.user.id
+            id: payload.id
         }
     });
 
     return {
       isScrum: (user && user.user_type !== "USER") ? (true) : (false),
-      user
+      ...user
     };
   }
 }
