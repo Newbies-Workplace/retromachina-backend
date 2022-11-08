@@ -22,7 +22,7 @@ services:
       - GOOGLE_CLIENT_ID
       - GOOGLE_SECRET
       - JWT_SECRET
-      - DATABASE_URL=mariadb://retro:retro@retro-db:3306/retro?characterEncoding=utf8&useUnicode=true
+      - DATABASE_URL=mysql://root:retro@retro-db:3306/retro?characterEncoding=utf8&useUnicode=true
       - HOME_PATH=/
     ports:
       - "3000:3000"
