@@ -15,7 +15,7 @@ config();
       secret: process.env.JWT_SECRET,
     }),
     AuthModule,
-    PrismaModule
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
