@@ -1,7 +1,13 @@
-import { User } from "@prisma/client"
+export type TokenUser = {
+    id: string,
+    nick: string,
+    email: string,
+    google_id: string
+}
 
 export type Token = {
-    user: User
+    isScrum: Boolean,
+    user: TokenUser
 }
   
 export type GoogleUser = {

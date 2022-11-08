@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtStrategy } from './auth/strategy/jwt.strategy';
 import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
+import { TeamModule } from './team/team.module';
 
 config();
 
@@ -15,7 +17,9 @@ config();
       secret: process.env.JWT_SECRET,
     }),
     AuthModule,
-    PrismaModule
+    PrismaModule,
+    UserModule,
+    TeamModule
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

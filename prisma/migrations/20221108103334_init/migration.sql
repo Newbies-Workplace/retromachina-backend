@@ -9,10 +9,11 @@ CREATE TABLE `Team` (
 
 -- CreateTable
 CREATE TABLE `TeamUsers` (
+    `id` VARCHAR(191) NOT NULL,
     `team_id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NULL,
+    `user_id` VARCHAR(191) NOT NULL,
 
-    PRIMARY KEY (`team_id`)
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -58,7 +59,7 @@ ALTER TABLE `Team` ADD CONSTRAINT `Team_scrum_master_id_fkey` FOREIGN KEY (`scru
 ALTER TABLE `TeamUsers` ADD CONSTRAINT `TeamUsers_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `TeamUsers` ADD CONSTRAINT `TeamUsers_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `TeamUsers` ADD CONSTRAINT `TeamUsers_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Task` ADD CONSTRAINT `Task_owner_id_fkey` FOREIGN KEY (`owner_id`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

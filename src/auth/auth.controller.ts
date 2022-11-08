@@ -16,8 +16,8 @@ export class AuthController {
     @Redirect(process.env.HOME_PATH)
     async googleAuth(@Request() request, @Response() response) {
         const user: GoogleUser = request.user;
-        const token = this.authService.googleAuth(user);
-
+        const token = await this.authService.googleAuth(user);
+        
         response.cookie('jwtToken', token);
     }
 }
