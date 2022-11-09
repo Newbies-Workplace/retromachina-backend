@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common/exceptions';
 import { Team, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenUser } from 'src/types';
@@ -54,6 +55,8 @@ export class UserService {
         team_id: teamId,
       },
     });
+
+    if (teamsInfo.length === 0) throw new NotFoundException();
 
     const getUsers = new Promise(async (resolve, reject) => {
       let users = Array();

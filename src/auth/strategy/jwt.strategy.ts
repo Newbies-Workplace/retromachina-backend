@@ -1,6 +1,6 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 import { TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -23,6 +23,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: payload.id,
       },
     });
+
+    if (!user) throw new ForbiddenException();
 
     return {
       isScrum: user && user.user_type !== 'USER' ? true : false,
