@@ -19,23 +19,26 @@ export class AuthService {
       },
     });
 
-        if (!queryUser) {
-            queryUser = await this.prismaService.user.create({
-                data: {
-                    nick: `${user.firstName} ${user.lastName}`,
-                    email: user.email,
-                    avatar_link: user.picture,
-                    google_id: user.id
-                }
-            });
-        }
-
-        return this.jwtService.sign({
-            user: {
-                nick: queryUser.nick,
-                email: queryUser.email,
-                google_id: user.id
-            }
-        }, { secret: process.env.JWT_SECRET });
+    if (!queryUser) {
+      queryUser = await this.prismaService.user.create({
+        data: {
+          nick: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          avatar_link: user.picture,
+          google_id: user.id,
+        },
+      });
     }
+
+    return this.jwtService.sign(
+      {
+        user: {
+          nick: queryUser.nick,
+          email: queryUser.email,
+          google_id: user.id,
+        },
+      },
+      { secret: process.env.JWT_SECRET },
+    );
+  }
 }

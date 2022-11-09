@@ -1,10 +1,16 @@
-import { Controller, Get, Redirect, UseGuards, Request, Response } from "@nestjs/common";
-import { config } from "dotenv";
-import { GoogleUser } from "src/types";
-import { User } from "src/utils/decorators/user.decorator";
-import { AuthService } from "./auth.service";
-import { GoogleGuard } from "./guard/google.guard";
-
+import {
+  Controller,
+  Get,
+  Redirect,
+  UseGuards,
+  Request,
+  Response,
+} from '@nestjs/common';
+import { config } from 'dotenv';
+import { GoogleUser } from 'src/types';
+import { User } from 'src/utils/decorators/user.decorator';
+import { AuthService } from './auth.service';
+import { GoogleGuard } from './guard/google.guard';
 
 config();
 
