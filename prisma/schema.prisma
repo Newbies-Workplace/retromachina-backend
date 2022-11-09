@@ -20,8 +20,9 @@ model Team {
 }
 
 model TeamUsers {
-  team_id String  @id
-  user_id String?
+  id String @id @default(uuid())
+  team_id String
+  user_id String
 
   Team Team? @relation(fields: [team_id], references: [id])
   User User? @relation(fields: [user_id], references: [id])
@@ -30,7 +31,7 @@ model TeamUsers {
 model User {
   id          String @id @default(uuid())
   nick        String
-  email       String
+  email       String @unique
   avatar_link String
   user_type   Role   @default(USER)
   google_id   String @unique

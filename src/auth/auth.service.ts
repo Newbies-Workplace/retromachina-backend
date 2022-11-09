@@ -35,8 +35,7 @@ export class AuthService {
         user: {
           nick: queryUser.nick,
           email: queryUser.email,
-          avatar_link: queryUser.avatar_link,
-          user_type: queryUser.user_type,
+          google_id: user.id,
         },
       },
       { secret: process.env.JWT_SECRET },
