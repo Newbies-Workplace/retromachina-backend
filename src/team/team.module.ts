@@ -6,6 +6,6 @@ import { TeamService } from './team.service';
 
 @Module({
   controllers: [TeamController],
-  providers: [TeamService, JwtStrategy, UserService]
+  providers: [TeamService, JwtStrategy, UserService],
 })
 export class TeamModule {}

@@ -19,7 +19,7 @@ config();
     AuthModule,
     PrismaModule,
     UserModule,
-    TeamModule
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

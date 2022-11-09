@@ -19,14 +19,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: TokenUser) {
     const user = await this.prismaService.user.findFirst({
-        where: {
-            id: payload.id
-        }
+      where: {
+        id: payload.id,
+      },
     });
 
     return {
-      isScrum: (user && user.user_type !== "USER") ? (true) : (false),
-      ...user
+      isScrum: user && user.user_type !== 'USER' ? true : false,
+      ...user,
     };
   }
 }
