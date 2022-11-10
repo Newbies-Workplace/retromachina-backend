@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Redirect,
-  UseGuards,
-  Response,
-} from '@nestjs/common';
+import { Controller, Get, Redirect, UseGuards, Response } from '@nestjs/common';
 import { config } from 'dotenv';
 import { GoogleUser } from 'src/types';
 import { User } from 'src/utils/decorators/user.decorator';
@@ -17,12 +11,18 @@ config();
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Get('redirect')
   @UseGuards(GoogleGuard)
-  @Redirect(process.env.HOME_PATH)
-  async googleAuth(@User() user: GoogleUser, @Response() response) {
+  @Get('redirect')
+  async googleAuth() {}
+
+  @UseGuards(GoogleGuard)
+  @Get('login')
+  async googleLogin(@User() user: GoogleUser, @Response() response) {
     const token = await this.authService.googleAuth(user);
 
-    response.cookie('jwtToken', token);
+    response.status(200);
+    return response.json({
+      access_token: token,
+    });
   }
 }
