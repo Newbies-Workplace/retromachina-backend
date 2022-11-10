@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common/exceptions';
+import { HttpException, NotFoundException } from '@nestjs/common/exceptions';
 import { Team, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenUser } from 'src/types';
@@ -50,6 +50,14 @@ export class UserService {
   }
 
   async getUsers(teamId: string) {
+    const teamCheck = await this.prismaService.team.findFirst({
+      where: {
+        id: teamId,
+      },
+    });
+
+    if (!teamCheck) throw new NotFoundException();
+
     const teamsInfo = await this.prismaService.teamUsers.findMany({
       where: {
         team_id: teamId,
