@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ForbiddenException, HttpException } from '@nestjs/common/exceptions';
+import {
+  ForbiddenException,
+  HttpException,
+  MethodNotAllowedException,
+} from '@nestjs/common/exceptions';
 import { check } from 'prettier';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenUser } from 'src/types';
@@ -52,7 +56,8 @@ export class TeamService {
 
     if (!checkTeam) throw new NotFoundException();
 
-    if (checkTeam.scrum_master_id !== user.id) throw new ForbiddenException();
+    if (checkTeam.scrum_master_id !== user.id)
+      throw new MethodNotAllowedException();
 
     await this.prismaService.team.update({
       where: {

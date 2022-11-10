@@ -1,13 +1,13 @@
 import {
   Controller,
   Get,
-  NotFoundException,
   Param,
   Post,
   UseGuards,
   ForbiddenException,
   Body,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { TokenUser } from 'src/types';
@@ -23,7 +23,8 @@ export class TeamController {
   @Get(':id')
   @UseGuards(JwtGuard)
   async getTeam(@Param('id') teamId: string) {
-    if (teamId.trim().length === 0) throw new NotFoundException();
+    if (teamId.trim().length === 0)
+      throw new BadRequestException('No query param');
 
     return await this.teamService.getTeam(teamId);
   }
