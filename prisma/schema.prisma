@@ -43,13 +43,12 @@ model User {
 }
 
 model Task {
-  id            String    @id @default(uuid())
-  description   String
-  state         TaskState
-  owner_id      String
-  retro_id      String
-  team_id       String
-  retro_card_id String
+  id          String    @id @default(uuid())
+  description String
+  state       TaskState
+  owner_id    String
+  retro_id    String
+  team_id     String
 
   User          User?          @relation(fields: [owner_id], references: [id])
   Team          Team?          @relation(fields: [team_id], references: [id])
