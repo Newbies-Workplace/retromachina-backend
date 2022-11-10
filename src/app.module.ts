@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { TeamModule } from './team/team.module';
 import { TaskModule } from './task/task.module';
+import { RetroModule } from './retro/retro.module';
 
 config();
 
@@ -22,6 +23,7 @@ config();
     UserModule,
     TeamModule,
     TaskModule,
+    RetroModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
