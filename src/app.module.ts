@@ -8,6 +8,7 @@ import { JwtStrategy } from './auth/strategy/jwt.strategy';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { TeamModule } from './team/team.module';
+import { RetroModule } from './retro/retro.module';
 
 config();
 
@@ -20,6 +21,7 @@ config();
     PrismaModule,
     UserModule,
     TeamModule,
+    RetroModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
