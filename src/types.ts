@@ -6,9 +6,9 @@ export type TokenUser = {
   isScrum: Boolean;
 };
 
-// export type Token = {
-//     user: TokenUser
-// }
+export type Token = {
+    user: TokenUser
+}
 
 export type GoogleUser = {
   id: string;

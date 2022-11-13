@@ -16,8 +16,6 @@ export class RetroService {
       },
     });
 
-    if (retros.length === 0) throw new NotFoundException();
-
     return retros;
   }
 }

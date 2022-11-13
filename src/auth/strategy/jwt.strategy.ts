@@ -2,7 +2,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { config } from 'dotenv';
-import { TokenUser } from 'src/types';
+import { Token, TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 config();
@@ -17,10 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: TokenUser) {
+  async validate(payload: Token) {
     const user = await this.prismaService.user.findFirst({
       where: {
-        id: payload.id,
+        google_id: payload.user.google_id,
       },
     });
 
