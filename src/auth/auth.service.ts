@@ -28,11 +28,33 @@ export class AuthService {
           google_id: user.id,
         },
       });
+
+      const invites = await this.prismaService.invite.findMany({
+        where: {
+          email: user.email
+        }
+      });
+
+      invites.forEach(async (invite) => {
+        await this.prismaService.teamUsers.create({
+          data: {
+            team_id: invite.team_id,
+            user_id: queryUser.id
+          }
+        });
+
+        await this.prismaService.invite.delete({
+          where: {
+            id: invite.id
+          }
+        });
+      });
     }
 
     return this.jwtService.sign(
       {
         user: {
+          id: queryUser.id,
           nick: queryUser.nick,
           email: queryUser.email,
           google_id: user.id,

@@ -44,7 +44,7 @@ export class TeamService {
       },
     });
 
-    this.addUsersToTeamUsers(createTeamDto.emails, team.id);
+    await this.addUsersToTeamUsers(createTeamDto.emails, team.id, user.id);
   }
 
   async editTeam(user: TokenUser, teamId: string, editTeamDto: EditTeamDto) {
@@ -78,11 +78,17 @@ export class TeamService {
       },
     });
 
+    await this.prismaService.invite.deleteMany({
+      where: {
+        team_id: checkTeam.id
+      }
+    })
+
     // Add users to teamUsers
-    this.addUsersToTeamUsers(editTeamDto.emails, checkTeam.id);
+    await this.addUsersToTeamUsers(editTeamDto.emails, checkTeam.id, user.id);
   }
 
-  async addUsersToTeamUsers(emails: string[], teamId: string) {
+  async addUsersToTeamUsers(emails: string[], teamId: string, scrumId: string) {
     emails.forEach(async (email) => {
       const user = await this.prismaService.user.findFirst({
         where: {
@@ -90,10 +96,17 @@ export class TeamService {
         },
       });
 
-      if (!user)
-        throw new NotFoundException({
-          missing: email,
+      if (!user) {
+        await this.prismaService.invite.create({
+          data: {
+            email: email,
+            team_id: teamId,
+            from_scrum_id: scrumId
+          }
         });
+
+        return;
+      }
 
       await this.prismaService.teamUsers.create({
         data: {

@@ -18,6 +18,7 @@ model Team {
   TeamUser      TeamUsers[]
   Task          Task[]
   Retrospective Retrospective[]
+  Invite        Invite[]
 }
 
 model TeamUsers {
@@ -40,6 +41,7 @@ model User {
   TeamUsers TeamUsers[]
   Team      Team[]
   Task      Task[]
+  Invite    Invite[]
 }
 
 model Task {
@@ -64,6 +66,16 @@ model Retrospective {
   Team Team? @relation(fields: [team_id], references: [id])
 
   Task Task[]
+}
+
+model Invite {
+  id            String @id @default(uuid())
+  email         String
+  team_id       String
+  from_scrum_id String
+
+  Team Team? @relation(fields: [team_id], references: [id])
+  User User? @relation(fields: [from_scrum_id], references: [id])
 }
 
 enum Role {
