@@ -10,6 +10,7 @@ import { UserModule } from './user/user.module';
 import { TeamModule } from './team/team.module';
 import { TaskModule } from './task/task.module';
 import { RetroModule } from './retro/retro.module';
+import { InvitesModule } from './invites/invites.module';
 
 config();
 
@@ -24,6 +25,7 @@ config();
     TeamModule,
     TaskModule,
     RetroModule,
+    InvitesModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
