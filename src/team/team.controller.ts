@@ -8,6 +8,7 @@ import {
   Body,
   Put,
   BadRequestException,
+  HttpCode,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { TokenUser } from 'src/types';
@@ -42,6 +43,7 @@ export class TeamController {
 
   @UseGuards(JwtGuard)
   @Put(':id')
+  @HttpCode(204)
   async editTeam(
     @User() user: TokenUser,
     @Body() editTeamDto: EditTeamDto,
