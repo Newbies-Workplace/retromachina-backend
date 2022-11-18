@@ -11,6 +11,7 @@ import { TeamModule } from './team/team.module';
 import { TaskModule } from './task/task.module';
 import { RetroModule } from './retro/retro.module';
 import { InvitesModule } from './invites/invites.module';
+import { GatewayModule } from './gateway/gateway.module';
 
 config();
 
@@ -26,6 +27,7 @@ config();
     TaskModule,
     RetroModule,
     InvitesModule,
+    GatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
