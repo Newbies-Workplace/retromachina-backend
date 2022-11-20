@@ -73,7 +73,8 @@ export class GatewayService {
         if (userQuery.user_type == "SCRUM_MASTER") {
         // Sprawdzanie userId scrum mastera teamu ? rozłączenie
             if (room.scrumData.userId === user.id) {
-                room.setScrum(client.id, user);
+                room.setScrum(user);
+                room.addUser(client.id, user);
             } else {
                 this.doException(client, ErrorTypes.UnauthorizedScrum, `User (${user.id}) is not authorized to be a SCRUM_MASTER of this team`);
                 return;
