@@ -10,6 +10,7 @@ enum ErrorTypes {
     RetrospectiveNotFound = "RetrospectiveNotFound",
     UserNotFound = "UserNotFound",
     UnauthorizedScrum = "UnauthorizedScrum",
+    JwtError = "JwtError",
 }
 
 @Injectable()
@@ -23,17 +24,24 @@ export class GatewayService {
         return retroRoom;
     }
 
-    checkUserCreds(retroId: string, user: Token) {
-        //TODO:
-        //coś tam
+    // Czy potrzebne???
+    checkUserCreds(client: Socket) {
+        const user = this.getUserFromJWT(client);
     }
 
-    getUserFromJWT(JWT: string) {
-        let result = this.jwtService.verify(
-            JWT,
-            { secret: process.env.JWT_SECRET }
-        )
-        return result.user;
+    getUserFromJWT(client: Socket) {
+        try {
+            let result = this.jwtService.verify(
+                client.handshake.headers.authorization,
+                { secret: process.env.JWT_SECRET }
+            );
+            return result.user;
+            
+        } catch (error) {
+            if (error.name == "JsonWebTokenError") {
+                this.doException(client, ErrorTypes.JwtError, "JWT must be provided!");
+            }
+        }
     }
 
     doException(client: Socket, type: ErrorTypes, message: string) {
@@ -47,8 +55,6 @@ export class GatewayService {
     async handleJoin(client: Socket, retroId: string, user: TokenUser ) {
         const room = this.retroRooms[retroId];
         if (!room) {
-            // TODO:
-            // co sie stanie jak złe id retro
             this.doException(client, ErrorTypes.RetrospectiveNotFound, `Retrospective (${retroId}) not found`);
             return;
         }
@@ -67,15 +73,15 @@ export class GatewayService {
         if (userQuery.user_type == "SCRUM_MASTER") {
         // Sprawdzanie userId scrum mastera teamu ? rozłączenie
             if (room.scrumData.userId === user.id) {
-                room.setScrum(client.id, user.id);
+                room.setScrum(client.id, user);
             } else {
-                this.doException(client, ErrorTypes.UnauthorizedScrum, "User is not authorized to be a SCRUM_MASTER of this team");
+                this.doException(client, ErrorTypes.UnauthorizedScrum, `User (${user.id}) is not authorized to be a SCRUM_MASTER of this team`);
                 return;
             }
         } else {
             //TODO:
             // Czy użytkownik jest w teamie
-            room.addUser(client.id, user.id);
+            room.addUser(client.id, user);
         }
         
         client.emit("event_on_join", {

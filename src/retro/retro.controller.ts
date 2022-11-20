@@ -34,7 +34,7 @@ export class RetroController {
       body.teamId,
       body.columns,
     );
-    room.setScrum(null, user.id);
+    room.setScrum(user);
 
     return {
       retro_id: "0251185b-8d7b-4b44-8891-d7d0274e7cb6"

@@ -1,12 +1,11 @@
+import { TokenUser } from "src/types";
+
 interface User {
     socketId: string,
-    data : {
-        userId: string
-    }
+    data: TokenUser
 }
 
 interface ScrumMaster {
-    socketId?: string,
     userId: string
 }
 
@@ -35,21 +34,17 @@ export class RetroRoom {
         this.roomState = "reflection";
     }
 
-    addUser(socketId: string, userId: string) {
-        this.users.set(userId, {
+    addUser(socketId: string, user: TokenUser) {
+        this.users.set(socketId, {
             socketId,
-            data: {
-                userId
-            }
+            data: user
         });
     }
 
-    setScrum(socketId: string, userId: string) {
+    setScrum(user: TokenUser) {
         this.scrumData = {
-            socketId,
-            userId: userId
+            userId: user.id
         }
-        this.addUser(socketId, userId);
     }
 
     getFronData() {
@@ -61,7 +56,13 @@ export class RetroRoom {
             roomState: this.roomState,
             retroColumns: this.retroColumns,
             userList: Array.from(this.users.values()).map((user) => {
-                return user.data;
+                const resultUser = {
+                    id: user.data.id,
+                    nick: user.data.nick,
+                    email: user.data.email,
+                    avatar_link: user.data.email
+                }
+                return resultUser;
             })
         }
     }
