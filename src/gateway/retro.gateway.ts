@@ -7,10 +7,15 @@ import { GatewayService } from './gateway.service';
 export class RetroGateway {
   constructor(private gatewayService: GatewayService){}
    
-  @SubscribeMessage("command_join")
-  async handleJoin(client: Socket) {
+  @SubscribeMessage("connection")
+  async handleConnection(client: Socket) {
       const retroId = client.handshake.query.retro_id as string;
       const user = this.gatewayService.getUserFromJWT(client);
-      await this.gatewayService.handleJoin(client, retroId, user);
+      await this.gatewayService.handleConnection(client, retroId, user);
+  }
+
+  @SubscribeMessage("command_ready")
+  async handleReady(client: Socket) {
+    this.gatewayService.handleReady(client, true);
   }
 }

@@ -1,8 +1,8 @@
 import { TokenUser } from "src/types";
 
-interface User {
-    socketId: string,
-    data: TokenUser
+export interface User {
+    userId: string,
+    isReady?: boolean
 }
 
 interface ScrumMaster {
@@ -19,7 +19,7 @@ export interface RetroColumn {
 type RoomState = "reflection" | "group" | "vote" | "summary";
 
 export class RetroRoom {
-    private scrumData: ScrumMaster;
+    scrumData: ScrumMaster;
     users: Map<string, User> = new Map();
     // retroColumns: Array<RetroColumn> = [];
 
@@ -34,20 +34,35 @@ export class RetroRoom {
         this.roomState = "reflection";
     }
 
-    addUser(socketId: string, user: TokenUser) {
-        this.users.set(socketId, {
-            socketId,
-            data: user
-        });
+    setReady(socketId: string, readyState: boolean){
+        const user = this.users.get(socketId);
+        user.isReady = readyState;
     }
 
-    setScrum(user: TokenUser) {
+    addUser(socketId: string, userId: string) {
+        const result = Array.from(this.users.entries()).find(([key, localUser]) => {
+            return localUser.userId == userId;
+        });
+
+        if (!result){
+            this.users.set(socketId, {
+                userId,
+                isReady: false
+            });
+        } else {
+            this.users.delete(result[0]);
+            this.users.set(socketId, result[1]);
+        }
+    }
+
+    setScrum(userId: string) {
         this.scrumData = {
-            userId: user.id
+            userId
         }
     }
 
     getFronData() {
+        console.log(Array.from(this.users.values()));
         return {
             id: this.id,
             teamId: this.teamId,
@@ -57,10 +72,8 @@ export class RetroRoom {
             retroColumns: this.retroColumns,
             userList: Array.from(this.users.values()).map((user) => {
                 const resultUser = {
-                    id: user.data.id,
-                    nick: user.data.nick,
-                    email: user.data.email,
-                    avatar_link: user.data.email
+                    id: user.userId,
+                    is_ready: user.isReady
                 }
                 return resultUser;
             })
