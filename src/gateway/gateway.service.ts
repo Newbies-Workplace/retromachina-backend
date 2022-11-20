@@ -101,14 +101,15 @@ export class GatewayService {
         }
         
         client.emit("event_on_join", {
-            roomData: room.getFronData()
+            roomData: room.getFrontData()
         });
     }
 
     handleReady(client: Socket, readyState: boolean) {
-        this.retroRooms.get(this.users.get(client.id).roomId)
-            .users.get(client.id).isReady = readyState;
-        
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+        roomUser.isReady = readyState;
     }
 }
 

@@ -32,7 +32,11 @@ export class RetroController {
     const room = await this.gatewayService.addRetroRoom(
       "0251185b-8d7b-4b44-8891-d7d0274e7cb6",
       body.teamId,
-      body.columns,
+      {
+        ...body.columns,
+        cards: {
+        }
+      },
     );
     room.setScrum(user.id);
 

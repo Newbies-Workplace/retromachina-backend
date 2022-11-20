@@ -16,7 +16,7 @@ export interface RetroColumn {
     description: string
 }
 
-type RoomState = "reflection" | "group" | "vote" | "summary";
+type RoomState = "reflection" | "group" | "vote" | "discuss" | "summary";
 
 export class RetroRoom {
     scrumData: ScrumMaster;
@@ -61,7 +61,7 @@ export class RetroRoom {
         }
     }
 
-    getFronData() {
+    getFrontData() {
         console.log(Array.from(this.users.values()));
         return {
             id: this.id,
