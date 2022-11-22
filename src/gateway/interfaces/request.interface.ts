@@ -22,5 +22,5 @@ export interface RoomStatePayload {
 }
 
 export interface ChangeTimerPayload {
-    seconds: number | null
+    timestamp: Date
 }

@@ -43,7 +43,7 @@ export class RetroGateway {
 
   @SubscribeMessage("command_change_timer")
   handleChangeTimer(client: Socket, payload: ChangeTimerPayload) {
-    this.gatewayService.handleChangeTimer(client, payload.seconds);
+    this.gatewayService.handleChangeTimer(this.server, client, payload.timestamp);
   }
 
   // @SubscribeMessage("disconnect")
