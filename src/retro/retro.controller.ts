@@ -5,6 +5,7 @@ import { RetroService } from './retro.service';
 import { v4 as uuid } from 'uuid';
 import { RetroColumn } from 'src/gateway/objects/retroRoom.object';
 import { User } from 'src/utils/decorators/user.decorator';
+import { TokenUser } from 'src/types';
 
 @Controller('retros')
 export class RetroController {
@@ -22,21 +23,19 @@ export class RetroController {
 
   @Post()
   @UseGuards(JwtGuard)
-  async createRetro(@User() user, @Body() body) {
+  async createRetro(@User() user: TokenUser, @Body() body) {
     // TODO:
-    // kolumny
-    // Jeden team jeden retro
-    // tworzenie retro\
-    // in development
+    // Jedno retro na jeden team
 
     const room = await this.gatewayService.addRetroRoom(
       "0251185b-8d7b-4b44-8891-d7d0274e7cb6",
       body.teamId,
-      {
-        ...body.columns,
-        cards: {
-        }
-      },
+      // TODO:
+      // change it
+      body.columns.map((column: RetroColumn) => {
+        column.id = uuid();
+        return column;
+      }),
     );
     room.setScrum(user.id);
 

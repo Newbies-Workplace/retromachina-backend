@@ -1,8 +1,16 @@
-import { TokenUser } from "src/types";
+import { RoomState } from "src/utils/validator/roomstate.validator";
+
+export interface Card {
+    id: string,
+    text: string,
+    authorId: string,
+    columnId: string
+}
 
 export interface User {
     userId: string,
-    isReady?: boolean
+    isReady: boolean,
+    isWriting: boolean,
 }
 
 interface ScrumMaster {
@@ -14,20 +22,23 @@ export interface RetroColumn {
     color: string,
     name: string,
     description: string
+    cards: Card[]
 }
-
-type RoomState = "reflection" | "group" | "vote" | "discuss" | "summary";
 
 export class RetroRoom {
     scrumData: ScrumMaster;
+    usersWriting: number = 0;
+    usersReady: number = 0;
+
     users: Map<string, User> = new Map();
-    // retroColumns: Array<RetroColumn> = [];
 
     createdDate: Date;
     roomState: RoomState;
 
     maxVotes?: Number;
     timerEnds?: Date;
+
+    cards: Card[] = [];
 
     constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
         this.createdDate = new Date();
@@ -47,7 +58,8 @@ export class RetroRoom {
         if (!result){
             this.users.set(socketId, {
                 userId,
-                isReady: false
+                isReady: false,
+                isWriting: false
             });
         } else {
             this.users.delete(result[0]);
@@ -62,21 +74,35 @@ export class RetroRoom {
     }
 
     getFrontData() {
-        console.log(Array.from(this.users.values()));
+        const tempUsers = Array.from(this.users.values())
+
         return {
             id: this.id,
             teamId: this.teamId,
             createdDate: this.createdDate,
             maxVotes: this.maxVotes,
+            usersReady: this.usersReady,
+            usersWriting: this.usersWriting,
             roomState: this.roomState,
-            retroColumns: this.retroColumns,
-            userList: Array.from(this.users.values()).map((user) => {
+            retroColumns: this.retroColumns.map((column) => {
+                column.cards = this.cards.filter((card) => {
+                    return card.columnId == column.id;
+                });
+                return column;
+            }),
+            users: tempUsers.map((user) => {
                 const resultUser = {
                     id: user.userId,
-                    is_ready: user.isReady
+                    isReady: user.isReady
                 }
                 return resultUser;
             })
         }
+    }
+
+    changeState(roomState: RoomState) {
+        // cośtam się dzieje przy zmianie stanu
+        this.timerEnds = null;
+        this.roomState = roomState;
     }
 }

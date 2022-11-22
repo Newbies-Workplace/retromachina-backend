@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Token, TokenUser } from 'src/types';
-import { RetroColumn, RetroRoom} from './objects/retroRoom.object';
+import {  TokenUser } from 'src/types';
+import { NewCardPayload } from './interfaces/request.interface';
+import { Card, RetroColumn, RetroRoom} from './objects/retroRoom.object';
+import { v4 as uuid } from 'uuid';
+import { RoomState } from 'src/utils/validator/roomstate.validator';
+import { RoomStateValidator } from 'src/utils/validator/roomstate.validator';
 
 
 enum ErrorTypes {
@@ -12,6 +16,7 @@ enum ErrorTypes {
     UserNotFound = "UserNotFound",
     UnauthorizedScrum = "UnauthorizedScrum",
     JwtError = "JwtError",
+    InvalidRoomState = "InvalidRoomState"
 }
 
 interface UserData {
@@ -23,6 +28,7 @@ interface UserData {
 export class GatewayService {
     public users = new Map<string, UserData>();
     public retroRooms = new Map<string, RetroRoom>();
+
     constructor(private prismaService: PrismaService, private jwtService: JwtService){}
 
     async addRetroRoom(retroId: string, teamId: string, columns: RetroColumn[]) {
@@ -86,7 +92,6 @@ export class GatewayService {
 
         if (userQuery.user_type == "SCRUM_MASTER") {
         // Sprawdzanie userId scrum mastera teamu ? rozłączenie
-            console.log(room.scrumData.userId, user.id);
             if (room.scrumData.userId === user.id) {
                 room.setScrum(user.id);
                 room.addUser(client.id, user.id);
@@ -100,16 +105,85 @@ export class GatewayService {
             room.addUser(client.id, user.id);
         }
         
+        client.join(retroId);
         client.emit("event_on_join", {
-            roomData: room.getFrontData()
+            roomData: room.getFrontData(),
         });
     }
 
-    handleReady(client: Socket, readyState: boolean) {
+    handleReady(server: Server, client: Socket, readyState: boolean) {
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
         const roomUser = room.users.get(client.id);
-        roomUser.isReady = readyState;
+
+        if (roomUser.isReady !== readyState) {
+            roomUser.isReady = readyState;
+            readyState ? room.usersReady++ : room.usersReady--;
+            this.emitRoomDataTo(roomId, server, room);
+        }
+    }
+
+    handleNewCard(server: Server, client: Socket, card: NewCardPayload){
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        card.id = uuid()
+
+        room.cards.push(card);
+
+        server.to(roomId).emit("event_new_card", {
+            card
+        });
+    }
+
+    handleDeleteCard(server: Server, client: Socket, cardId: string) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+
+        const cardIndex = room.cards.findIndex(card => card.id === cardId && card.authorId === roomUser.userId);
+        if (cardIndex !== -1) {
+            room.cards = room.cards.filter(card => !(card.id === cardId && card.authorId === roomUser.userId));
+            server.to(roomId).emit("event_delete_card", {
+                cardId
+            });
+        }
+    }
+
+    handleWriteState(server: Server, client: Socket, state: boolean) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+        
+        if (roomUser.isWriting !== state) {
+            roomUser.isWriting = state;
+            state ? room.usersWriting++ : room.usersWriting--;
+            this.emitRoomDataTo(roomId, server, room);
+        }
+    }
+    
+    handleRoomState(server: Server, client: Socket, roomState: RoomState){
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        
+        const isValid = RoomStateValidator.validate(roomState);
+        if (!isValid) {
+            this.doException(client, ErrorTypes.InvalidRoomState, `Invalid room state value (${roomState})`);
+            return;
+        }
+
+        room.changeState(roomState);
+        
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleChangeTimer(client: Socket, seconds: number){
+        
+    }
+
+    emitRoomDataTo(roomId: string, server: Server, room: RetroRoom) {
+        server.to(roomId).emit("event_room_sync", {
+            roomData: room.getFrontData()
+        });
     }
 }
 
