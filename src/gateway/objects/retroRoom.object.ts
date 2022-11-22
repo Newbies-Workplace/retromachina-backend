@@ -21,9 +21,11 @@ export interface RetroColumn {
     id: string,
     color: string,
     name: string,
-    description: string
-    cards: Card[]
-    teamCardsAmount: number;
+    description: string,
+    cards: Card[],
+    teamCardsAmount: number,
+    usersWriting: number
+    isWriting: boolean
 }
 
 export class RetroRoom {
@@ -83,13 +85,14 @@ export class RetroRoom {
             createdDate: this.createdDate,
             maxVotes: this.maxVotes,
             usersReady: this.usersReady,
-            usersWriting: this.usersWriting !== 0,
             roomState: this.roomState,
             timerEnds: this.timerEnds,
+            cards: this.cards,
             retroColumns: this.retroColumns.map((column) => {
                 column.cards = this.cards.filter((card) => {
                     return card.columnId == column.id;
                 });
+                column.isWriting = column.usersWriting > 0;
                 column.teamCardsAmount = column.cards.length;
                 return column;
             }),

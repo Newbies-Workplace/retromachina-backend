@@ -33,7 +33,7 @@ export class RetroGateway {
 
   @SubscribeMessage("command_write_state")
   handleWriteState(client: Socket, payload: WriteStatePayload) {
-    this.gatewayService.handleWriteState(this.server, client, payload.writeState);
+    this.gatewayService.handleWriteState(this.server, client, payload);
   }
 
   @SubscribeMessage("command_room_state")

@@ -5,8 +5,8 @@ export interface ReadyPayload {
 export interface NewCardPayload {
     id: string,
     text: string,
-    authorId: string,
-    columnId: string
+    columnId: string,
+    cardId: string,
 }
 
 export interface DeleteCardPayload {
@@ -14,7 +14,8 @@ export interface DeleteCardPayload {
 }
 
 export interface WriteStatePayload {
-    writeState: boolean
+    writeState: boolean,
+    columnId: string
 }
 
 export interface RoomStatePayload {

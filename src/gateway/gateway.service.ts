@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { NewCardPayload } from './interfaces/request.interface';
+import { NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { Card, RetroColumn, RetroRoom} from './objects/retroRoom.object';
 import { v4 as uuid } from 'uuid';
 import { RoomState } from 'src/utils/validator/roomstate.validator';
@@ -123,10 +123,14 @@ export class GatewayService {
         }
     }
 
-    handleNewCard(server: Server, client: Socket, card: NewCardPayload){
+    handleNewCard(server: Server, client: Socket, newCard: NewCardPayload){
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+
+        const card = newCard as unknown as Card
         card.id = uuid()
+        card.authorId = roomUser.userId;
 
         room.cards.push(card);
 
@@ -149,14 +153,22 @@ export class GatewayService {
         }
     }
 
-    handleWriteState(server: Server, client: Socket, state: boolean) {
+    handleWriteState(server: Server, client: Socket, data: WriteStatePayload) {
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
         const roomUser = room.users.get(client.id);
         
-        if (roomUser.isWriting !== state) {
-            roomUser.isWriting = state;
-            state ? room.usersWriting++ : room.usersWriting--;
+        if (roomUser.isWriting !== data.writeState) {
+            roomUser.isWriting = data.writeState;
+            
+            const column = room.retroColumns.find((column) => {
+                return column.id === data.columnId;
+            });
+
+            if (column) {
+                data.writeState ? column.usersWriting++ : column.usersWriting--;
+            }
+            
             this.emitRoomDataTo(roomId, server, room);
         }
     }
