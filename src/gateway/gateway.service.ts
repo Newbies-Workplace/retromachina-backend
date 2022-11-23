@@ -160,25 +160,23 @@ export class GatewayService {
         const room = this.retroRooms.get(roomId);
         const roomUser = room.users.get(client.id);
 
-        
-        if (!roomUser.writingInColumns.includes(data.columnId)) {
-            roomUser.isWriting = roomUser.writingInColumns.length > 0;
-            
-            const column = room.retroColumns.find((column) => {
-                return column.id === data.columnId;
-            });
+        const column = room.retroColumns.find((column) => {
+            return column.id === data.columnId;
+        });
 
-            if (column) {
-                if (data.writeState) {
-                    roomUser.writingInColumns.push(roomId);
-                    column.usersWriting++;
-                } else {
-                    roomUser.writingInColumns.filter((columnId) => columnId !== data.columnId);
-                    column.usersWriting--;
-                }
-
-                this.emitRoomDataTo(roomId, server, room);
+        if (column) {
+            if (data.writeState) {
+                roomUser.writingInColumns.push(data.columnId);
+                column.usersWriting++;
+            } else {
+                roomUser.writingInColumns = roomUser.writingInColumns.filter((columnId) => {
+                    return columnId !== data.columnId
+                });
+                column.usersWriting--;
             }
+
+            roomUser.isWriting = roomUser.writingInColumns.length > 0;
+            this.emitRoomDataTo(roomId, server, room);
         }
     }
     
