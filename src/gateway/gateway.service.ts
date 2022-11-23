@@ -125,6 +125,8 @@ export class GatewayService {
     }
 
     handleNewCard(server: Server, client: Socket, newCard: NewCardPayload){
+        if (newCard.text.trim().length === 0) return;
+
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
         const roomUser = room.users.get(client.id);
@@ -135,7 +137,6 @@ export class GatewayService {
 
         const column = room.retroColumns.find((column) => column.id === card.columnId)
         if (!column) { return; }
-
         room.cards.unshift(card);
 
         this.emitRoomDataTo(roomId, server, room);
