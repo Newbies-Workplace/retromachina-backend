@@ -85,8 +85,6 @@ export class UserService {
       resolve(users);
     });
 
-    return {
-      users: await getUsers,
-    };
+    return await getUsers;
   }
 }
