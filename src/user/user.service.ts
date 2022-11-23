@@ -41,6 +41,7 @@ export class UserService {
     });
 
     return {
+      user_id: userInfo.id,
       nick: userInfo.nick,
       email: userInfo.email,
       avatar_link: userInfo.avatar_link,

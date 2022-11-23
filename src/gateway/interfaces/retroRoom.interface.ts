@@ -10,6 +10,7 @@ export interface User {
     userId: string;
     isReady: boolean;
     isWriting: boolean;
+    writingInColumns: string[]
 }
 export interface ScrumMaster {
     userId: string;
