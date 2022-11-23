@@ -15,7 +15,7 @@ export interface RoomDataResponse {
     maxVotes: number,
     usersReady: number,
     roomState: RoomState,
-    timerEnds: Date,
+    timerEnds: number,
     cards: Card[],
     retroColumns: RetroColumn[],
     users: UserDataResponse[]

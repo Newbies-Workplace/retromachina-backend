@@ -197,7 +197,7 @@ export class GatewayService {
         this.emitRoomDataTo(roomId, server, room);
     }
 
-    handleChangeTimer(server: Server, client: Socket, timestamp: Date){
+    handleChangeTimer(server: Server, client: Socket, timestamp: number){
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
 

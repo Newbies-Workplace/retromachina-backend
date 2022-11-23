@@ -13,7 +13,7 @@ export class RetroRoom {
     roomState: RoomState;
 
     maxVotes?: number;
-    timerEnds?: Date;
+    timerEnds?: number = 0;
 
     cards: Card[] = [];
 
