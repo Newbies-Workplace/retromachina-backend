@@ -127,12 +127,15 @@ export class GatewayService {
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
         const roomUser = room.users.get(client.id);
-
+        
         const card = newCard as unknown as Card
         card.id = uuid()
         card.authorId = roomUser.userId;
 
-        room.cards.push(card);
+        const column = room.retroColumns.find((column) => column.id === card.columnId)
+        if (!column) { return; }
+
+        room.cards.unshift(card);
 
         server.to(roomId).emit("event_new_card", {
             card
