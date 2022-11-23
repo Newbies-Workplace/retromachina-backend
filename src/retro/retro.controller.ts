@@ -3,7 +3,7 @@ import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { GatewayService } from 'src/gateway/gateway.service';
 import { RetroService } from './retro.service';
 import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/gateway/objects/retroRoom.object';
+import { RetroColumn } from "src/gateway/interfaces/retroRoom.interface";
 import { User } from 'src/utils/decorators/user.decorator';
 import { TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';

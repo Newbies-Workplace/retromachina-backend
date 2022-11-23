@@ -1,32 +1,6 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
-
-export interface Card {
-    id: string,
-    text: string,
-    authorId: string,
-    columnId: string
-}
-
-export interface User {
-    userId: string,
-    isReady: boolean,
-    isWriting: boolean,
-}
-
-interface ScrumMaster {
-    userId: string
-}
-
-export interface RetroColumn {
-    id: string,
-    color: string,
-    name: string,
-    description: string,
-    cards: Card[],
-    teamCardsAmount: number,
-    usersWriting: number
-    isWriting: boolean
-}
+import { RoomDataResponse } from "../interfaces/response.interface";
+import { ScrumMaster, User, Card, RetroColumn } from "../interfaces/retroRoom.interface";
 
 export class RetroRoom {
     scrumData: ScrumMaster;
@@ -38,7 +12,7 @@ export class RetroRoom {
     createdDate: Date;
     roomState: RoomState;
 
-    maxVotes?: Number;
+    maxVotes?: number;
     timerEnds?: Date;
 
     cards: Card[] = [];
@@ -79,7 +53,7 @@ export class RetroRoom {
     getFrontData() {
         const tempUsers = Array.from(this.users.values())
 
-        return {
+        const roomData: RoomDataResponse = {
             id: this.id,
             teamId: this.teamId,
             createdDate: this.createdDate,
@@ -97,13 +71,15 @@ export class RetroRoom {
                 return column;
             }),
             users: tempUsers.map((user) => {
-                const resultUser = {
+                return {
                     id: user.userId,
-                    isReady: user.isReady
-                }
-                return resultUser;
+                    isReady: user.isReady,
+                    isWriting: user.isWriting
+                };
             })
         }
+
+        return roomData;
     }
 
     changeState(roomState: RoomState) {
