@@ -150,7 +150,7 @@ export class GatewayService {
         const cardIndex = room.cards.findIndex(card => card.id === cardId && card.authorId === roomUser.userId);
         if (cardIndex !== -1) {
             room.cards = room.cards.filter(card => !(card.id === cardId && card.authorId === roomUser.userId));
-            server.to(roomId).emit("event_delete_card", {
+            client.emit("event_delete_card", {
                 cardId
             });
         }
