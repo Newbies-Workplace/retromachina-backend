@@ -126,6 +126,7 @@ export class GatewayService {
 
     handleNewCard(server: Server, client: Socket, newCard: NewCardPayload){
         if (newCard.text.trim().length === 0) return;
+        if (newCard.text.length > 1000) newCard.text = newCard.text.slice(0, 1000);
 
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
