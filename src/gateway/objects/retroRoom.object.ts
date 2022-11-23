@@ -36,7 +36,8 @@ export class RetroRoom {
             this.users.set(socketId, {
                 userId,
                 isReady: false,
-                isWriting: false
+                isWriting: false,
+                writingInColumns: []
             });
         } else {
             this.users.delete(result[0]);
