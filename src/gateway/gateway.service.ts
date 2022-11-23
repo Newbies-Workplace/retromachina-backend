@@ -137,9 +137,7 @@ export class GatewayService {
 
         room.cards.unshift(card);
 
-        server.to(roomId).emit("event_new_card", {
-            card
-        });
+        this.emitRoomDataTo(roomId, server, room);
     }
 
     handleDeleteCard(server: Server, client: Socket, cardId: string) {
@@ -150,9 +148,7 @@ export class GatewayService {
         const cardIndex = room.cards.findIndex(card => card.id === cardId && card.authorId === roomUser.userId);
         if (cardIndex !== -1) {
             room.cards = room.cards.filter(card => !(card.id === cardId && card.authorId === roomUser.userId));
-            client.emit("event_delete_card", {
-                cardId
-            });
+            this.emitRoomDataTo(roomId, server, room);
         }
     }
 
