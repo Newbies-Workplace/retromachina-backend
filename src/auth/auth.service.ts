@@ -22,7 +22,7 @@ export class AuthService {
     if (!queryUser) {
       queryUser = await this.prismaService.user.create({
         data: {
-          nick: `${user.firstName} ${user.lastName}`,
+          nick: `${user.firstName}${(user.lastName) ? (""+user.lastName) : ""}`,
           email: user.email,
           avatar_link: user.picture,
           google_id: user.id,
