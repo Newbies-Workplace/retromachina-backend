@@ -71,6 +71,11 @@ export class RetroGateway {
     this.gatewayService.handleMoveCardToColumn(this.server, client, payload);
   }
 
+  @SubscribeMessage("command_close_room")
+  async handleCloseRoom(client: Socket) {
+    await this.gatewayService.handleCloseRoom(this.server, client);
+  }
+
   // @SubscribeMessage("disconnect")
   // handleDisconnect(payload){
   // }

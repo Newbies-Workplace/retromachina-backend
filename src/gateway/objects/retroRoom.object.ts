@@ -113,9 +113,11 @@ export class RetroRoom {
     }
 
     addCardToCard(parentCardId: string, cardId: string) {
-        //const card = this.cards.find((card) => card.id === cardId);
         const card = this.pushCardToEnd(cardId);
+        const parentCard = this.cards.find((card) => card.id === parentCardId);
+
         card.parentCardId = parentCardId;
+        card.columnId = parentCard.columnId;
     }
 
     addVote(userId: string, parentCardId: string){
@@ -128,6 +130,14 @@ export class RetroRoom {
     moveCardToColumn(cardId: string, columnId: string){
         const card = this.pushCardToEnd(cardId);
         card.columnId = columnId;
+
+        if (!card.parentCardId) {
+            const groupedCards = this.cards.filter((_card) => _card.parentCardId === card.id);
+            groupedCards.forEach((card) => {
+                card.columnId = columnId;
+            });
+        }
+
         card.parentCardId = null;
     }
 
