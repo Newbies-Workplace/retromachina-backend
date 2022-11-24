@@ -4,7 +4,7 @@ export interface Card {
     text: string;
     authorId: string;
     columnId: string;
-    groupedTo?: string;
+    parentCardId?: string;
 }
 
 export interface User {
