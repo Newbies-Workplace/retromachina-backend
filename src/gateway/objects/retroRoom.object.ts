@@ -58,6 +58,35 @@ export class RetroRoom {
         this.votes.splice(voteIndex, 1);
     }
 
+    setVoteAmount(value: number) {
+        this.maxVotes = value;
+
+        const userVotes = {};
+
+        console.log(this.votes, userVotes);
+
+        const votesCopy = [...this.votes];
+        votesCopy.reverse();
+
+        this.votes = votesCopy.filter((vote) => {
+            let voter = userVotes[vote.voterId];
+
+            if (!voter) {
+                userVotes[vote.voterId] = { amount: 0 };
+                voter = userVotes[vote.voterId];
+            }
+
+            if (voter.amount < this.maxVotes) {
+                userVotes[vote.voterId].amount++;
+                return true;
+            }
+
+            return false;
+        });
+
+        console.log(this.votes);
+    }
+
     setScrum(userId: string) {
         this.scrumData = {
             userId

@@ -191,9 +191,8 @@ export class GatewayService {
             if (!card) { return; }
 
             room.addVote(roomUser.userId, parentCardId);
+            this.emitRoomDataTo(roomId, server, room);
         }
-
-        this.emitRoomDataTo(roomId, server, room);
     }
 
     handleRemoveVoteOnCard(server: Server, client: Socket, parentCardId: string) {
@@ -211,7 +210,7 @@ export class GatewayService {
         const roomUser = room.users.get(client.id);
         if (room.scrumData.userId !== roomUser.userId) { return; }
 
-        room.maxVotes = amount;
+        room.setVoteAmount(amount);
         this.emitRoomDataTo(roomId, server, room);
     }
 
