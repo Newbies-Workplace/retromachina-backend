@@ -85,10 +85,11 @@ export class GatewayService {
         
         client.join(retroId);
         const roomData = room.getFrontData();
+
         client.emit("event_on_join", {
             roomData
         });
-        console.log(roomData);
+
         client.broadcast.to(retroId).emit("event_room_sync", {
             roomData
         });
@@ -117,7 +118,7 @@ export class GatewayService {
         const card = newCard as unknown as Card
         card.id = uuid()
         card.authorId = roomUser.userId;
-        card.groupedTo = null;
+        card.parentCardId = null;
 
         const column = room.retroColumns.find((column) => column.id === card.columnId)
         if (!column) { return; }
