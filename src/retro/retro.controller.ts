@@ -25,9 +25,7 @@ export class RetroController {
   @Post()
   @UseGuards(JwtGuard)
   async createRetro(@User() user: TokenUser, @Body() body) {
-    // TODO:
-    // Jedno retro na jeden team
-    // validacja teamu
+    // TODO: Jedno retro na jeden team, validacja teamu
 
     const retroId = uuid();
     await this.prismaService.retrospective.create({

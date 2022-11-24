@@ -78,8 +78,7 @@ export class GatewayService {
                 return;
             }
         } else {
-            //TODO:
-            // Czy użytkownik jest w teamie
+            //TODO: Czy użytkownik jest w teamie
             room.addUser(client.id, user.id);
         }
         
@@ -235,6 +234,24 @@ export class GatewayService {
 
         room.moveCardToColumn(data.cardId, data.columnId);
         this.emitRoomDataTo(roomId, server, room);
+    }
+
+    async handleCloseRoom(server: Server, client: Socket) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+
+        if (roomUser.userId === room.scrumData.userId) {
+            // TODO: Stworzenie podsumowania i handler zamknięcia
+            await this.prismaService.retrospective.update({
+                where: { id: room.id },
+                data: { is_running: false }
+            });
+
+            this.retroRooms.delete(roomId);
+        }
+
+        server.to(roomId).emit("event_close_room");
     }
 
     // [UTILS]
