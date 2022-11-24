@@ -9,6 +9,7 @@ import {
   Put,
   BadRequestException,
   HttpCode,
+  Delete,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { TokenUser } from 'src/types';
@@ -52,5 +53,16 @@ export class TeamController {
     if (!user.isScrum) throw new ForbiddenException();
 
     await this.teamService.editTeam(user, teamId, editTeamDto);
+  }
+
+  @UseGuards(JwtGuard)
+  @Delete(':id')
+  async deleteTeam(
+    @User() user: TokenUser,
+    @Param('id') teamId: string
+  ) {
+    if (!user.isScrum) throw new ForbiddenException();
+    
+    await this.teamService.deleteTeam(teamId);
   }
 }

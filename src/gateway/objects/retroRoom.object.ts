@@ -115,6 +115,7 @@ export class RetroRoom {
     addCardToCard(parentCardId: string, cardId: string) {
         const card = this.pushCardToEnd(cardId);
         const parentCard = this.cards.find((card) => card.id === parentCardId);
+        //TODO: Przerzucanie grupy na inną karteczke
 
         card.parentCardId = parentCardId;
         card.columnId = parentCard.columnId;

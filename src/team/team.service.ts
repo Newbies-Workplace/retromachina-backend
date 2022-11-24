@@ -116,4 +116,12 @@ export class TeamService {
       });
     });
   }
+
+  async deleteTeam(teamId: string) {
+    await this.prismaService.team.delete({
+      where: {
+        id: teamId
+      }
+    })
+  }
 }

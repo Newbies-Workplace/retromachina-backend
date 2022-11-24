@@ -26,7 +26,7 @@ model TeamUsers {
   team_id String
   user_id String
 
-  Team Team? @relation(fields: [team_id], references: [id])
+  Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
   User User? @relation(fields: [user_id], references: [id])
 }
 
@@ -53,7 +53,7 @@ model Task {
   team_id     String
 
   User          User?          @relation(fields: [owner_id], references: [id])
-  Team          Team?          @relation(fields: [team_id], references: [id])
+  Team          Team?          @relation(fields: [team_id], references: [id], onDelete: Cascade)
   Retrospective Retrospective? @relation(fields: [retro_id], references: [id])
 }
 
@@ -63,7 +63,7 @@ model Retrospective {
   date       DateTime
   is_running Boolean
 
-  Team Team? @relation(fields: [team_id], references: [id])
+  Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
 
   Task Task[]
 }
@@ -74,7 +74,7 @@ model Invite {
   team_id       String
   from_scrum_id String
 
-  Team Team? @relation(fields: [team_id], references: [id])
+  Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
   User User? @relation(fields: [from_scrum_id], references: [id])
 }
 
