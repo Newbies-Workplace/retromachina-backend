@@ -128,6 +128,7 @@ export class RetroRoom {
     moveCardToColumn(cardId: string, columnId: string){
         const card = this.pushCardToEnd(cardId);
         card.columnId = columnId;
+        card.parentCardId = null;
     }
 
     removeVote(userId: string, parentCardId: string) {
