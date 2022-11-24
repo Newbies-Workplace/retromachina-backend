@@ -8,56 +8,59 @@ export class RetroRoom {
     usersReady: number = 0;
 
     users: Map<string, User> = new Map();
-
+    
     createdDate: Date;
     roomState: RoomState;
+<<<<<<< Updated upstream
 
     maxVotes?: number = 0;
+=======
+    
+    maxVotes?: number = 3;
+>>>>>>> Stashed changes
     timerEnds?: number = null;
 
     cards: Card[] = [];
     votes: Vote[] = [];
-
+    
     constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
         this.createdDate = new Date();
         this.roomState = "reflection";
     }
+    
+    getFrontData() {
+        const tempUsers = Array.from(this.users.values())
 
-    setReady(socketId: string, readyState: boolean){
-        const user = this.users.get(socketId);
-        user.isReady = readyState;
-    }
-
-    addUser(socketId: string, userId: string) {
-        const result = Array.from(this.users.entries()).find(([key, localUser]) => {
-            return localUser.userId == userId;
-        });
-
-        if (!result){
-            this.users.set(socketId, {
-                userId,
-                isReady: false,
-                isWriting: false,
-                writingInColumns: []
-            });
-        } else {
-            this.users.delete(result[0]);
-            this.users.set(socketId, result[1]);
+        const roomData: RoomDataResponse = {
+            id: this.id,
+            teamId: this.teamId,
+            createdDate: this.createdDate,
+            maxVotes: this.maxVotes,
+            usersReady: this.usersReady,
+            roomState: this.roomState,
+            timerEnds: this.timerEnds,
+            cards: this.cards,
+            votes: this.votes,
+            retroColumns: this.retroColumns.map((column) => {
+                column.cards = this.cards.filter((card) => {
+                    return card.columnId == column.id;
+                });
+                column.isWriting = column.usersWriting > 0;
+                column.teamCardsAmount = column.cards.length;
+                return column;
+            }),
+            users: tempUsers.map((user) => {
+                return {
+                    id: user.userId,
+                    isReady: user.isReady,
+                    isWriting: user.isWriting
+                };
+            })
         }
+        
+        return roomData;
     }
-
-    addVote(userId: string, parentCardId: string){
-        this.votes.unshift({
-            parentCardId,
-            voterId: userId
-        });
-    }
-
-    removeVote(userId: string, parentCardId: string) {
-        const voteIndex = this.votes.findIndex((vote) => vote.parentCardId === parentCardId && vote.voterId === userId);
-        this.votes.splice(voteIndex, 1);
-    }
-
+    
     setVoteAmount(value: number) {
         this.maxVotes = value;
 
@@ -92,37 +95,49 @@ export class RetroRoom {
         }
     }
 
-    getFrontData() {
-        const tempUsers = Array.from(this.users.values())
+    setReady(socketId: string, readyState: boolean){
+        const user = this.users.get(socketId);
+        user.isReady = readyState;
+    }
 
-        const roomData: RoomDataResponse = {
-            id: this.id,
-            teamId: this.teamId,
-            createdDate: this.createdDate,
-            maxVotes: this.maxVotes,
-            usersReady: this.usersReady,
-            roomState: this.roomState,
-            timerEnds: this.timerEnds,
-            cards: this.cards,
-            votes: this.votes,
-            retroColumns: this.retroColumns.map((column) => {
-                column.cards = this.cards.filter((card) => {
-                    return card.columnId == column.id;
-                });
-                column.isWriting = column.usersWriting > 0;
-                column.teamCardsAmount = column.cards.length;
-                return column;
-            }),
-            users: tempUsers.map((user) => {
-                return {
-                    id: user.userId,
-                    isReady: user.isReady,
-                    isWriting: user.isWriting
-                };
-            })
+    addUser(socketId: string, userId: string) {
+        const result = Array.from(this.users.entries()).find(([key, localUser]) => {
+            return localUser.userId == userId;
+        });
+
+        if (!result){
+            this.users.set(socketId, {
+                userId,
+                isReady: false,
+                isWriting: false,
+                writingInColumns: []
+            });
+        } else {
+            this.users.delete(result[0]);
+            this.users.set(socketId, result[1]);
         }
+    }
 
-        return roomData;
+    addCardToCard(parentCardId: string, cardId: string) {
+        const card = this.cards.find((card) => card.id === cardId);
+        card.groupedTo = parentCardId;
+    }
+
+    addVote(userId: string, parentCardId: string){
+        this.votes.unshift({
+            parentCardId,
+            voterId: userId
+        });
+    }
+
+    moveCardToColumn(cardId: string, columnId: string){
+        const card = this.cards.find((card) => card.id === cardId);
+        card.columnId = columnId;
+    }
+
+    removeVote(userId: string, parentCardId: string) {
+        const voteIndex = this.votes.findIndex((vote) => vote.parentCardId === parentCardId && vote.voterId === userId);
+        this.votes.splice(voteIndex, 1);
     }
 
     changeState(roomState: RoomState) {

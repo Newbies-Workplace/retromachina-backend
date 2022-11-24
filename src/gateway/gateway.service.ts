@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { CardAddToCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { RetroRoom} from './objects/retroRoom.object';
 import { Card, RetroColumn } from "./interfaces/retroRoom.interface";
 import { v4 as uuid } from 'uuid';
@@ -84,8 +84,13 @@ export class GatewayService {
         }
         
         client.join(retroId);
+        const roomData = room.getFrontData();
         client.emit("event_on_join", {
-            roomData: room.getFrontData(),
+            roomData
+        });
+        console.log(roomData);
+        client.broadcast.to(retroId).emit("event_room_sync", {
+            roomData
         });
     }
 
@@ -112,6 +117,7 @@ export class GatewayService {
         const card = newCard as unknown as Card
         card.id = uuid()
         card.authorId = roomUser.userId;
+        card.groupedTo = null;
 
         const column = room.retroColumns.find((column) => column.id === card.columnId)
         if (!column) { return; }
@@ -211,6 +217,22 @@ export class GatewayService {
         if (room.scrumData.userId !== roomUser.userId) { return; }
 
         room.setVoteAmount(amount);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleCardAddToCard(server: Server, client: Socket, data: CardAddToCardPayload) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.addCardToCard(data.parentCardId, data.cardId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleMoveCardToColumn(server: Server, client: Socket, data: MoveCardToColumnPayload) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.moveCardToColumn(data.cardId, data.columnId);
         this.emitRoomDataTo(roomId, server, room);
     }
 

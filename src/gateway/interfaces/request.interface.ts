@@ -9,16 +9,6 @@ export interface NewCardPayload {
     cardId: string,
 }
 
-export interface CardAddToCardPayload {
-    superiorCardId: string;
-    cardId: string;
-}
-
-export interface MoveCardToColumnPayload {
-    columnId: string;
-    cardId: string;
-}
-
 export interface DeleteCardPayload {
     cardId: string
 }
@@ -46,4 +36,14 @@ export interface RemoveVoteOnCardPayload {
 
 export interface ChangeVoteAmountPayload {
     votesAmount: number;
+}
+
+export interface CardAddToCardPayload {
+    parentCardId: string;
+    cardId: string;
+}
+
+export interface MoveCardToColumnPayload {
+    columnId: string;
+    cardId: string;
 }
