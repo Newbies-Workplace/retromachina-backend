@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayService } from './gateway.service';
-import { ChangeTimerPayload, DeleteCardPayload, NewCardPayload, ReadyPayload, RoomStatePayload, WriteStatePayload } from './interfaces/request.interface';
+import { ChangeTimerPayload, ChangeVoteAmountPayload, DeleteCardPayload, NewCardPayload, ReadyPayload, RemoveVoteOnCardPayload, RoomStatePayload, VoteOnCardPayload, WriteStatePayload } from './interfaces/request.interface';
 
 
 @WebSocketGateway(3001, {cors: true})
@@ -44,6 +44,21 @@ export class RetroGateway {
   @SubscribeMessage("command_change_timer")
   handleChangeTimer(client: Socket, payload: ChangeTimerPayload) {
     this.gatewayService.handleChangeTimer(this.server, client, payload.timestamp);
+  }
+
+  @SubscribeMessage("command_vote_on_card")
+  handleVoteOnCard(client: Socket, payload: VoteOnCardPayload) {
+    this.gatewayService.handleVoteOnCard(this.server, client, payload.parentCardId);
+  }
+
+  @SubscribeMessage("command_remove_vote_on_card")
+  handleRemoveVoteOnCard(client: Socket, payload: RemoveVoteOnCardPayload){
+    this.gatewayService.handleRemoveVoteOnCard(this.server, client, payload.parentCardId);
+  }
+
+  @SubscribeMessage("command_change_vote_amount")
+  handleChangeVoteAmount(client: Socket, payload: ChangeVoteAmountPayload) {
+    this.gatewayService.handleChangeVoteAmount(this.server, client, payload.votesAmount);
   }
 
   // @SubscribeMessage("disconnect")

@@ -1,6 +1,6 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
 import { RoomDataResponse } from "../interfaces/response.interface";
-import { ScrumMaster, User, Card, RetroColumn } from "../interfaces/retroRoom.interface";
+import { ScrumMaster, User, Card, RetroColumn, Vote } from "../interfaces/retroRoom.interface";
 
 export class RetroRoom {
     scrumData: ScrumMaster;
@@ -12,10 +12,11 @@ export class RetroRoom {
     createdDate: Date;
     roomState: RoomState;
 
-    maxVotes?: number;
+    maxVotes?: number = 0;
     timerEnds?: number = 0;
 
     cards: Card[] = [];
+    votes: Vote[] = [];
 
     constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
         this.createdDate = new Date();
@@ -45,6 +46,46 @@ export class RetroRoom {
         }
     }
 
+    addVote(userId: string, parentCardId: string){
+        this.votes.unshift({
+            parentCardId,
+            voterId: userId
+        });
+    }
+
+    removeVote(userId: string, parentCardId: string) {
+        const voteIndex = this.votes.findIndex((vote) => vote.parentCardId === parentCardId && vote.voterId === userId);
+        this.votes.splice(voteIndex, 1);
+    }
+
+    setVoteAmount(value: number) {
+        this.maxVotes = value;
+
+        const userVotes = {};
+
+        const votesCopy = [...this.votes];
+        votesCopy.reverse();
+
+        const filteredVotes = votesCopy.filter((vote) => {
+            let voter = userVotes[vote.voterId];
+
+            if (!voter) {
+                userVotes[vote.voterId] = { amount: 0 };
+                voter = userVotes[vote.voterId];
+            }
+
+            if (voter.amount < this.maxVotes) {
+                userVotes[vote.voterId].amount++;
+                return true;
+            }
+
+            return false;
+        });
+
+        filteredVotes.reverse();
+        this.votes = filteredVotes;
+    }
+
     setScrum(userId: string) {
         this.scrumData = {
             userId
@@ -63,6 +104,7 @@ export class RetroRoom {
             roomState: this.roomState,
             timerEnds: this.timerEnds,
             cards: this.cards,
+            votes: this.votes,
             retroColumns: this.retroColumns.map((column) => {
                 column.cards = this.cards.filter((card) => {
                     return card.columnId == column.id;
@@ -87,5 +129,10 @@ export class RetroRoom {
         // cośtam się dzieje przy zmianie stanu
         this.timerEnds = null;
         this.roomState = roomState;
+        
+        this.usersReady = 0;
+        for (let [key, user] of this.users) {
+            user.isReady = false;
+        }
     }
 }

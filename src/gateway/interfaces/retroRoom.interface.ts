@@ -4,6 +4,7 @@ export interface Card {
     text: string;
     authorId: string;
     columnId: string;
+    groupedTo: string;
 }
 
 export interface User {
@@ -25,4 +26,9 @@ export interface RetroColumn {
     teamCardsAmount: number;
     usersWriting: number;
     isWriting: boolean;
+}
+
+export interface Vote {
+    parentCardId: string;
+    voterId: string;
 }
