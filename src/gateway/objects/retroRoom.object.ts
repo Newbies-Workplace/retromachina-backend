@@ -1,6 +1,6 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
 import { RoomDataResponse } from "../interfaces/response.interface";
-import { ScrumMaster, User, Card, RetroColumn } from "../interfaces/retroRoom.interface";
+import { ScrumMaster, User, Card, RetroColumn, Vote } from "../interfaces/retroRoom.interface";
 
 export class RetroRoom {
     scrumData: ScrumMaster;
@@ -12,10 +12,11 @@ export class RetroRoom {
     createdDate: Date;
     roomState: RoomState;
 
-    maxVotes?: number;
+    maxVotes?: number = 0;
     timerEnds?: number = 0;
 
     cards: Card[] = [];
+    votes: Vote[] = [];
 
     constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
         this.createdDate = new Date();
@@ -45,6 +46,18 @@ export class RetroRoom {
         }
     }
 
+    addVote(userId: string, parentCardId: string){
+        this.votes.unshift({
+            parentCardId,
+            voterId: userId
+        });
+    }
+
+    removeVote(userId: string, parentCardId: string) {
+        const voteIndex = this.votes.findIndex((vote) => vote.parentCardId === parentCardId && vote.voterId === userId);
+        this.votes.splice(voteIndex, 1);
+    }
+
     setScrum(userId: string) {
         this.scrumData = {
             userId
@@ -63,6 +76,7 @@ export class RetroRoom {
             roomState: this.roomState,
             timerEnds: this.timerEnds,
             cards: this.cards,
+            votes: this.votes,
             retroColumns: this.retroColumns.map((column) => {
                 column.cards = this.cards.filter((card) => {
                     return card.columnId == column.id;

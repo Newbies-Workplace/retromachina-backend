@@ -43,30 +43,7 @@ export class GatewayService {
         const user = this.getUserFromJWT(client);
     }
 
-    getUserFromJWT(client: Socket) {
-        try {
-            let result = this.jwtService.verify(
-                client.handshake.headers.authorization,
-                { secret: process.env.JWT_SECRET }
-            );
-            return result.user;
-            
-        } catch (error) {
-            if (error.name == "JsonWebTokenError") {
-                this.doException(client, ErrorTypes.JwtError, "JWT must be provided!");
-            }
-        }
-    }
-
-    doException(client: Socket, type: ErrorTypes, message: string) {
-        this.users.delete(client.id);
-
-        client.emit("error", {
-            type,
-            message
-        });
-        client.disconnect();
-    }
+    // [HANDLERS]
 
     async handleConnection(client: Socket, retroId: string, user: TokenUser ) {
         const room = this.retroRooms.get(retroId);
@@ -201,6 +178,68 @@ export class GatewayService {
 
         room.timerEnds = timestamp;
         this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleVoteOnCard(server: Server, client: Socket, parentCardId: string) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+
+        const userVotes = room.votes.filter((vote) => vote.voterId === roomUser.userId).length;
+        if (userVotes < room.maxVotes) {
+            const card = room.cards.find((card) => card.id === parentCardId)
+            if (!card) { return; }
+
+            room.addVote(roomUser.userId, parentCardId);
+        }
+
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleRemoveVoteOnCard(server: Server, client: Socket, parentCardId: string) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+
+        room.removeVote(roomUser.userId, parentCardId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleChangeVoteAmount(server: Server, client: Socket, amount: number) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+        const roomUser = room.users.get(client.id);
+        if (room.scrumData.userId !== roomUser.userId) { return; }
+
+        room.maxVotes = amount;
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    // [UTILS]
+
+    getUserFromJWT(client: Socket) {
+        try {
+            let result = this.jwtService.verify(
+                client.handshake.headers.authorization,
+                { secret: process.env.JWT_SECRET }
+            );
+            return result.user;
+            
+        } catch (error) {
+            if (error.name == "JsonWebTokenError") {
+                this.doException(client, ErrorTypes.JwtError, "JWT must be provided!");
+            }
+        }
+    }
+
+    doException(client: Socket, type: ErrorTypes, message: string) {
+        this.users.delete(client.id);
+
+        client.emit("error", {
+            type,
+            message
+        });
+        client.disconnect();
     }
 
     emitRoomDataTo(roomId: string, server: Server, room: RetroRoom) {

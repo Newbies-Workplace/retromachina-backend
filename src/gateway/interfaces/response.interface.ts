@@ -1,5 +1,5 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
-import { Card, RetroColumn, User } from "./retroRoom.interface";
+import { Card, RetroColumn, User, Vote } from "./retroRoom.interface";
 
 
 interface UserDataResponse {
@@ -19,4 +19,5 @@ export interface RoomDataResponse {
     cards: Card[],
     retroColumns: RetroColumn[],
     users: UserDataResponse[]
+    votes: Vote[]
 }
