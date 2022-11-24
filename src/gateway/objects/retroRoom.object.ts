@@ -66,7 +66,7 @@ export class RetroRoom {
         const votesCopy = [...this.votes];
         votesCopy.reverse();
 
-        this.votes = votesCopy.filter((vote) => {
+        const filteredVotes = votesCopy.filter((vote) => {
             let voter = userVotes[vote.voterId];
 
             if (!voter) {
@@ -81,6 +81,9 @@ export class RetroRoom {
 
             return false;
         });
+
+        filteredVotes.reverse();
+        this.votes = filteredVotes;
     }
 
     setScrum(userId: string) {
