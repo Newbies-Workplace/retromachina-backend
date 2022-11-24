@@ -12,7 +12,7 @@ export class RetroRoom {
     createdDate: Date;
     roomState: RoomState;
 
-    maxVotes?: number = 0;
+    maxVotes?: number = 3;
     timerEnds?: number = null;
 
     cards: Card[] = [];
