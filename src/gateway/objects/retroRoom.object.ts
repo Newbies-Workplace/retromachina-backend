@@ -63,8 +63,6 @@ export class RetroRoom {
 
         const userVotes = {};
 
-        console.log(this.votes, userVotes);
-
         const votesCopy = [...this.votes];
         votesCopy.reverse();
 
@@ -83,8 +81,6 @@ export class RetroRoom {
 
             return false;
         });
-
-        console.log(this.votes);
     }
 
     setScrum(userId: string) {
