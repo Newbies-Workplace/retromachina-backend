@@ -11,13 +11,7 @@ export class RetroRoom {
     
     createdDate: Date;
     roomState: RoomState;
-<<<<<<< Updated upstream
-
-    maxVotes?: number = 0;
-=======
-    
     maxVotes?: number = 3;
->>>>>>> Stashed changes
     timerEnds?: number = null;
 
     cards: Card[] = [];
