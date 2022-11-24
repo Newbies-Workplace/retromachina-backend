@@ -129,5 +129,10 @@ export class RetroRoom {
         // cośtam się dzieje przy zmianie stanu
         this.timerEnds = null;
         this.roomState = roomState;
+        
+        this.usersReady = 0;
+        for (let [key, user] of this.users) {
+            user.isReady = false;
+        }
     }
 }
