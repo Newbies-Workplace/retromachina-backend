@@ -259,7 +259,7 @@ export class GatewayService {
         const room = this.retroRooms.get(roomId);
 
         room.addActionPoint(data.text, data.ownerId);
-        server.to(roomId).emit("event_close_room");
+        this.emitRoomDataTo(roomId, server, room);
     }
 
     handleDiscussionChangeCard(server: Server, client: Socket, data: DiscussionChangeCardPayload){
@@ -267,7 +267,7 @@ export class GatewayService {
         const room = this.retroRooms.get(roomId);
 
         room.changeDiscussionCard(data.cardId);
-        server.to(roomId).emit("event_close_room");
+        this.emitRoomDataTo(roomId, server, room);
     }
 
     handleChangeActionPointOwner(server: Server, client: Socket, data: ChangeActionPointOwnerPayload){
@@ -276,7 +276,7 @@ export class GatewayService {
         const room = this.retroRooms.get(roomId);
 
         room.changeActionPointOwner(data.actionPointId, data.ownerId);
-        server.to(roomId).emit("event_close_room");
+        this.emitRoomDataTo(roomId, server, room);
     }
 
     // [UTILS]
