@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { CardAddToCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { RetroRoom} from './objects/retroRoom.object';
 import { Card, RetroColumn } from "./interfaces/retroRoom.interface";
 import { v4 as uuid } from 'uuid';
@@ -252,6 +252,28 @@ export class GatewayService {
         }
 
         server.to(roomId).emit("event_close_room");
+    }
+
+    handleAddActionPoint(client: Socket, data: AddActionPointPayload) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.addActionPoint(data.text, data.ownerId);
+    }
+
+    handleDiscussionChangeCard(client: Socket, data: DiscussionChangeCardPayload){
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.changeDiscussionCard(data.cardId);
+    }
+
+    handleChangeActionPointOwner(client: Socket, data: ChangeActionPointOwnerPayload){
+        //TODO: Change action point handler
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.changeActionPointOwner(data.actionPointId, data.ownerId);
     }
 
     // [UTILS]

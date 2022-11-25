@@ -47,3 +47,17 @@ export interface MoveCardToColumnPayload {
     columnId: string;
     cardId: string;
 }
+
+export interface AddActionPointPayload {
+    text: string;
+    ownerId: string;
+}
+
+export interface ChangeActionPointOwnerPayload {
+    actionPointId: string,
+    ownerId: string
+}
+
+export interface DiscussionChangeCardPayload {
+    cardId: string;
+}

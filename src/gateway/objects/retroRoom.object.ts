@@ -1,6 +1,7 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
 import { RoomDataResponse } from "../interfaces/response.interface";
-import { ScrumMaster, User, Card, RetroColumn, Vote } from "../interfaces/retroRoom.interface";
+import { ScrumMaster, User, Card, RetroColumn, Vote, ActionPoint } from "../interfaces/retroRoom.interface";
+import { v4 as uuid } from 'uuid';
 
 export class RetroRoom {
     scrumData: ScrumMaster;
@@ -13,9 +14,11 @@ export class RetroRoom {
     roomState: RoomState;
     maxVotes?: number = 3;
     timerEnds?: number = null;
+    discutionCardId = null;
 
     cards: Card[] = [];
     votes: Vote[] = [];
+    actionPoints: ActionPoint[] = [];
     
     constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
         this.createdDate = new Date();
@@ -35,6 +38,7 @@ export class RetroRoom {
             timerEnds: this.timerEnds,
             cards: this.cards,
             votes: this.votes,
+            actionPoints: this.actionPoints,
             retroColumns: this.retroColumns.map((column) => {
                 column.cards = this.cards.filter((card) => {
                     return card.columnId == column.id;
@@ -115,7 +119,13 @@ export class RetroRoom {
     addCardToCard(parentCardId: string, cardId: string) {
         const card = this.pushCardToEnd(cardId);
         const parentCard = this.cards.find((card) => card.id === parentCardId);
-        //TODO: Przerzucanie grupy na inną karteczke
+        const childCards = this.cards.filter((card) => card.parentCardId === cardId);
+
+        childCards.forEach((card) => {
+            this.pushCardToEnd(card.id);
+            card.parentCardId = parentCardId;
+            card.columnId = parentCard.columnId;
+        });
 
         card.parentCardId = parentCardId;
         card.columnId = parentCard.columnId;
@@ -127,6 +137,15 @@ export class RetroRoom {
             voterId: userId
         });
     }
+
+    addActionPoint(text: string, ownerId: string) {
+        this.actionPoints.push({
+            id: uuid(),
+            text,
+            ownerId,
+            parentCardId: this.discutionCardId
+        });
+    } 
 
     moveCardToColumn(cardId: string, columnId: string){
         const card = this.pushCardToEnd(cardId);
@@ -148,7 +167,7 @@ export class RetroRoom {
     }
 
     changeState(roomState: RoomState) {
-        // cośtam się dzieje przy zmianie stanu
+        // TODO: cośtam się dzieje przy zmianie stanu
         this.timerEnds = null;
         this.roomState = roomState;
         
@@ -156,6 +175,15 @@ export class RetroRoom {
         for (let [key, user] of this.users) {
             user.isReady = false;
         }
+    }
+
+    changeActionPointOwner(actionPointId: string, newOwnerId: string) {
+        const actionPoint = this.actionPoints.find((actionPoint) => actionPoint.id === actionPointId);
+        actionPoint.ownerId = newOwnerId;
+    }
+
+    changeDiscussionCard(cardId: string) {
+        this.discutionCardId = cardId;
     }
 
     pushCardToEnd(cardId: string): Card {
