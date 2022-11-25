@@ -78,17 +78,17 @@ export class RetroGateway {
 
   @SubscribeMessage("command_add_action_point")
   handleAddActionPoint(client: Socket, payload: AddActionPointPayload){
-    this.gatewayService.handleAddActionPoint(client, payload);
+    this.gatewayService.handleAddActionPoint(this.server, client, payload);
   }
 
   @SubscribeMessage("command_change_action_point_owner")
   handleChangeActionPointOwner(client: Socket, payload: ChangeActionPointOwnerPayload){
-    this.gatewayService.handleChangeActionPointOwner(client, payload);
+    this.gatewayService.handleChangeActionPointOwner(this.server, client, payload);
   }
 
   @SubscribeMessage("command_discussion_change_card")
   handleDiscussionChangeCard(client: Socket, payload: DiscussionChangeCardPayload) {
-    this.gatewayService.handleDiscussionChangeCard(client, payload);
+    this.gatewayService.handleDiscussionChangeCard(this.server, client, payload);
   }
 
   // @SubscribeMessage("disconnect")

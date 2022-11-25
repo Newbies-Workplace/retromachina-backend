@@ -254,26 +254,29 @@ export class GatewayService {
         server.to(roomId).emit("event_close_room");
     }
 
-    handleAddActionPoint(client: Socket, data: AddActionPointPayload) {
+    handleAddActionPoint(server: Server, client: Socket, data: AddActionPointPayload) {
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
 
         room.addActionPoint(data.text, data.ownerId);
+        server.to(roomId).emit("event_close_room");
     }
 
-    handleDiscussionChangeCard(client: Socket, data: DiscussionChangeCardPayload){
+    handleDiscussionChangeCard(server: Server, client: Socket, data: DiscussionChangeCardPayload){
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
 
         room.changeDiscussionCard(data.cardId);
+        server.to(roomId).emit("event_close_room");
     }
 
-    handleChangeActionPointOwner(client: Socket, data: ChangeActionPointOwnerPayload){
+    handleChangeActionPointOwner(server: Server, client: Socket, data: ChangeActionPointOwnerPayload){
         //TODO: Change action point handler
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
 
         room.changeActionPointOwner(data.actionPointId, data.ownerId);
+        server.to(roomId).emit("event_close_room");
     }
 
     // [UTILS]
