@@ -46,7 +46,7 @@ model User {
 
 model Task {
   id          String    @id @default(uuid())
-  description String
+  description String @db.Text
   state       TaskState
   owner_id    String
   retro_id    String

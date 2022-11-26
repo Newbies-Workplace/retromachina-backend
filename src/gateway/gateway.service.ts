@@ -269,8 +269,11 @@ export class GatewayService {
     }
 
     handleAddActionPoint(server: Server, client: Socket, data: AddActionPointPayload) {
+        if (data.text.trim().length === 0) { return; }
+
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
+
 
         room.addActionPoint(data.text, data.ownerId);
         this.emitRoomDataTo(roomId, server, room);
