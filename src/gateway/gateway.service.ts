@@ -244,17 +244,17 @@ export class GatewayService {
         if (roomUser.userId === room.scrumData.userId) {
             // TODO: Stworzenie podsumowania i handler zamknięcia
 
-            await this.prismaService.task.createMany({
-                data: room.actionPoints.map((actionPoint) => {
-                    return {
-                        description: actionPoint.text,
-                        state: "FREEZED",
-                        owner_id: actionPoint.ownerId,
-                        retro_id: room.id,
-                        team_id: room.teamId
-                    }
-                })
-            }) 
+            // await this.prismaService.task.createMany({
+            //     data: room.actionPoints.map((actionPoint) => {
+            //         return {
+            //             description: actionPoint.text,
+            //             state: "FREEZED",
+            //             owner_id: actionPoint.ownerId,
+            //             retro_id: room.id,
+            //             team_id: room.teamId
+            //         }
+            //     })
+            // }) 
 
 
             await this.prismaService.retrospective.update({
