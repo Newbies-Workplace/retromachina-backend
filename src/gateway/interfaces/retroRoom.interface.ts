@@ -32,3 +32,10 @@ export interface Vote {
     parentCardId: string;
     voterId: string;
 }
+
+export interface ActionPoint {
+    id: string,
+    ownerId: string;
+    text: string;
+    parentCardId: string;
+}

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards, Header } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards, Header, Param } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { GatewayService } from 'src/gateway/gateway.service';
 import { RetroService } from './retro.service';
@@ -20,6 +20,14 @@ export class RetroController {
     if (teamId.trim().length === 0)
       throw new BadRequestException('No query param');
     return await this.retroService.getRetroDates(teamId);
+  }
+
+  @Get(":retroId")
+  @UseGuards(JwtGuard)
+  async getRetro(@Param('retroId') retroId: string) {
+    if (retroId.trim().length === 0)
+      throw new BadRequestException('No query param');
+    return await this.retroService.getRetro(retroId);
   }
 
   @Post()

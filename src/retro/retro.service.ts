@@ -25,4 +25,14 @@ export class RetroService implements OnModuleInit {
 
     return retros;
   }
+
+  async getRetro(retroId: string) {
+    const retro = await this.prismaService.retrospective.findFirst({
+      where: {
+        id: retroId
+      }
+    });
+
+    return retro;
+  }
 }

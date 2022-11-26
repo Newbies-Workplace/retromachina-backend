@@ -1,5 +1,5 @@
 import { RoomState } from "src/utils/validator/roomstate.validator";
-import { Card, RetroColumn, User, Vote } from "./retroRoom.interface";
+import { ActionPoint, Card, RetroColumn, User, Vote } from "./retroRoom.interface";
 
 
 interface UserDataResponse {
@@ -16,8 +16,10 @@ export interface RoomDataResponse {
     usersReady: number,
     roomState: RoomState,
     timerEnds: number,
+    discutionCardId: string | null,
     cards: Card[],
     retroColumns: RetroColumn[],
+    actionPoints: ActionPoint[]
     users: UserDataResponse[]
     votes: Vote[]
 }

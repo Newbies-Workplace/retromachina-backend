@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { TaskState, User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { CardAddToCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DeleteActionPointPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { RetroRoom} from './objects/retroRoom.object';
 import { Card, RetroColumn } from "./interfaces/retroRoom.interface";
 import { v4 as uuid } from 'uuid';
@@ -243,6 +243,20 @@ export class GatewayService {
 
         if (roomUser.userId === room.scrumData.userId) {
             // TODO: Stworzenie podsumowania i handler zamknięcia
+
+            await this.prismaService.task.createMany({
+                data: room.actionPoints.map((actionPoint) => {
+                    return {
+                        description: actionPoint.text,
+                        state: TaskState.FREEZED,
+                        owner_id: actionPoint.ownerId,
+                        retro_id: room.id,
+                        team_id: room.teamId
+                    }
+                })
+            });
+
+
             await this.prismaService.retrospective.update({
                 where: { id: room.id },
                 data: { is_running: false }
@@ -252,6 +266,42 @@ export class GatewayService {
         }
 
         server.to(roomId).emit("event_close_room");
+    }
+
+    handleAddActionPoint(server: Server, client: Socket, data: AddActionPointPayload) {
+        if (data.text.trim().length === 0) { return; }
+
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+
+        room.addActionPoint(data.text, data.ownerId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleDeleteActionPoint(server: Server, client: Socket, data: DeleteActionPointPayload) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.deleteActionPoint(data.actionPointId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleDiscussionChangeCard(server: Server, client: Socket, data: DiscussionChangeCardPayload){
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.changeDiscussionCard(data.cardId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleChangeActionPointOwner(server: Server, client: Socket, data: ChangeActionPointOwnerPayload){
+        //TODO: Change action point handler
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.changeActionPointOwner(data.actionPointId, data.ownerId);
+        this.emitRoomDataTo(roomId, server, room);
     }
 
     // [UTILS]

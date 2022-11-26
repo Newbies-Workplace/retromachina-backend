@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ActionPoint } from 'src/gateway/interfaces/retroRoom.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -20,7 +21,13 @@ export class TaskService {
       },
     });
 
-    return tasks;
+    return tasks.map((task) => {
+      return {
+        id: task.id,
+        ownerId: task.owner_id,
+        text: task.description
+      }
+    });
   }
 
   async getTeamTasks(teamID: string) {
