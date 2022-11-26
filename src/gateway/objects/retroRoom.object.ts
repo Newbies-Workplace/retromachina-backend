@@ -38,6 +38,7 @@ export class RetroRoom {
             timerEnds: this.timerEnds,
             cards: this.cards,
             votes: this.votes,
+            discutionCardId: this.discutionCardId,
             actionPoints: this.actionPoints,
             retroColumns: this.retroColumns.map((column) => {
                 column.cards = this.cards.filter((card) => {

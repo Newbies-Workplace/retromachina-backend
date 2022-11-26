@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { TaskState, User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
@@ -244,17 +244,17 @@ export class GatewayService {
         if (roomUser.userId === room.scrumData.userId) {
             // TODO: Stworzenie podsumowania i handler zamknięcia
 
-            // await this.prismaService.task.createMany({
-            //     data: room.actionPoints.map((actionPoint) => {
-            //         return {
-            //             description: actionPoint.text,
-            //             state: "FREEZED",
-            //             owner_id: actionPoint.ownerId,
-            //             retro_id: room.id,
-            //             team_id: room.teamId
-            //         }
-            //     })
-            // }) 
+            await this.prismaService.task.createMany({
+                data: room.actionPoints.map((actionPoint) => {
+                    return {
+                        description: actionPoint.text,
+                        state: TaskState.FREEZED,
+                        owner_id: actionPoint.ownerId,
+                        retro_id: room.id,
+                        team_id: room.teamId
+                    }
+                })
+            });
 
 
             await this.prismaService.retrospective.update({

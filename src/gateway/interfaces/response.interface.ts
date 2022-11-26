@@ -16,6 +16,7 @@ export interface RoomDataResponse {
     usersReady: number,
     roomState: RoomState,
     timerEnds: number,
+    discutionCardId: string | null,
     cards: Card[],
     retroColumns: RetroColumn[],
     actionPoints: ActionPoint[]
