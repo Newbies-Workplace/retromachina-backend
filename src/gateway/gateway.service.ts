@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DeleteActionPointPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { RetroRoom} from './objects/retroRoom.object';
 import { Card, RetroColumn } from "./interfaces/retroRoom.interface";
 import { v4 as uuid } from 'uuid';
@@ -243,6 +243,20 @@ export class GatewayService {
 
         if (roomUser.userId === room.scrumData.userId) {
             // TODO: Stworzenie podsumowania i handler zamknięcia
+
+            await this.prismaService.task.createMany({
+                data: room.actionPoints.map((actionPoint) => {
+                    return {
+                        description: actionPoint.text,
+                        state: "FREEZED",
+                        owner_id: actionPoint.ownerId,
+                        retro_id: room.id,
+                        team_id: room.teamId
+                    }
+                })
+            }) 
+
+
             await this.prismaService.retrospective.update({
                 where: { id: room.id },
                 data: { is_running: false }
@@ -259,6 +273,14 @@ export class GatewayService {
         const room = this.retroRooms.get(roomId);
 
         room.addActionPoint(data.text, data.ownerId);
+        this.emitRoomDataTo(roomId, server, room);
+    }
+
+    handleDeleteActionPoint(server: Server, client: Socket, data: DeleteActionPointPayload) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.deleteActionPoint(data.actionPointId);
         this.emitRoomDataTo(roomId, server, room);
     }
 

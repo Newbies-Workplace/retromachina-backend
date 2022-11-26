@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayService } from './gateway.service';
-import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, ChangeTimerPayload, ChangeVoteAmountPayload, DeleteCardPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, ReadyPayload, RemoveVoteOnCardPayload, RoomStatePayload, VoteOnCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, ChangeTimerPayload, ChangeVoteAmountPayload, DeleteActionPointPayload, DeleteCardPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, ReadyPayload, RemoveVoteOnCardPayload, RoomStatePayload, VoteOnCardPayload, WriteStatePayload } from './interfaces/request.interface';
 
 
 @WebSocketGateway(3001, {cors: true})
@@ -79,6 +79,11 @@ export class RetroGateway {
   @SubscribeMessage("command_add_action_point")
   handleAddActionPoint(client: Socket, payload: AddActionPointPayload){
     this.gatewayService.handleAddActionPoint(this.server, client, payload);
+  }
+
+  @SubscribeMessage("command_delete_action_point")
+  handleDeleteActionPoint(client: Socket, payload: DeleteActionPointPayload) {
+    this.gatewayService.handleDeleteActionPoint(this.server, client, payload);
   }
 
   @SubscribeMessage("command_change_action_point_owner")

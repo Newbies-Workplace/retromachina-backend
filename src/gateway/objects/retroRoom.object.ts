@@ -145,7 +145,7 @@ export class RetroRoom {
             ownerId,
             parentCardId: this.discutionCardId
         });
-    } 
+    }
 
     moveCardToColumn(cardId: string, columnId: string){
         const card = this.pushCardToEnd(cardId);
@@ -159,6 +159,10 @@ export class RetroRoom {
         }
 
         card.parentCardId = null;
+    }
+
+    deleteActionPoint(actionPointId: string) {
+        this.actionPoints = this.actionPoints.filter((actionPoint) => actionPoint.id !== actionPointId);
     }
 
     removeVote(userId: string, parentCardId: string) {
