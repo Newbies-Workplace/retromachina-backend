@@ -4,7 +4,7 @@ import { TaskState, User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {  TokenUser } from 'src/types';
-import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DeleteActionPointPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, DeleteActionPointPayload, MoveCardToColumnPayload, NewCardPayload, WriteStatePayload } from './interfaces/request.interface';
 import { RetroRoom} from './objects/retroRoom.object';
 import { Card, RetroColumn } from "./interfaces/retroRoom.interface";
 import { v4 as uuid } from 'uuid';
@@ -287,11 +287,18 @@ export class GatewayService {
         this.emitRoomDataTo(roomId, server, room);
     }
 
-    handleDiscussionChangeCard(server: Server, client: Socket, data: DiscussionChangeCardPayload){
+    handleNextDiscussionCard(server: Server, client: Socket){
         const roomId = this.users.get(client.id).roomId;
         const room = this.retroRooms.get(roomId);
 
-        room.changeDiscussionCard(data.cardId);
+        room.nextDiscussionCard();
+        this.emitRoomDataTo(roomId, server, room);
+    }
+    handlePreviousDiscussionCard(server: Server, client: Socket) {
+        const roomId = this.users.get(client.id).roomId;
+        const room = this.retroRooms.get(roomId);
+
+        room.previousDiscussionCard();
         this.emitRoomDataTo(roomId, server, room);
     }
 

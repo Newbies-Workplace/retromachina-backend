@@ -1,7 +1,7 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GatewayService } from './gateway.service';
-import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, ChangeTimerPayload, ChangeVoteAmountPayload, DeleteActionPointPayload, DeleteCardPayload, DiscussionChangeCardPayload, MoveCardToColumnPayload, NewCardPayload, ReadyPayload, RemoveVoteOnCardPayload, RoomStatePayload, VoteOnCardPayload, WriteStatePayload } from './interfaces/request.interface';
+import { AddActionPointPayload, CardAddToCardPayload, ChangeActionPointOwnerPayload, ChangeTimerPayload, ChangeVoteAmountPayload, DeleteActionPointPayload, DeleteCardPayload, MoveCardToColumnPayload, NewCardPayload, ReadyPayload, RemoveVoteOnCardPayload, RoomStatePayload, VoteOnCardPayload, WriteStatePayload } from './interfaces/request.interface';
 
 
 @WebSocketGateway(3001, {cors: true})
@@ -91,9 +91,14 @@ export class RetroGateway {
     this.gatewayService.handleChangeActionPointOwner(this.server, client, payload);
   }
 
-  @SubscribeMessage("command_discussion_change_card")
-  handleDiscussionChangeCard(client: Socket, payload: DiscussionChangeCardPayload) {
-    this.gatewayService.handleDiscussionChangeCard(this.server, client, payload);
+  @SubscribeMessage("command_next_discussion_card")
+  handleNextDiscussionCard(client: Socket) {
+    this.gatewayService.handleNextDiscussionCard(this.server, client);
+  }
+
+  @SubscribeMessage("command_previous_discussion_card")
+  handlePreviousDiscussionCard(client: Socket) {
+    this.gatewayService.handlePreviousDiscussionCard(this.server, client);
   }
 
   // @SubscribeMessage("disconnect")

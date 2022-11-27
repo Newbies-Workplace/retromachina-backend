@@ -61,7 +61,3 @@ export interface ChangeActionPointOwnerPayload {
     actionPointId: string,
     ownerId: string
 }
-
-export interface DiscussionChangeCardPayload {
-    cardId: string;
-}
