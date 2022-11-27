@@ -187,8 +187,63 @@ export class RetroRoom {
         actionPoint.ownerId = newOwnerId;
     }
 
-    changeDiscussionCard(cardId: string) {
-        this.discutionCardId = cardId;
+    nextDiscussionCard() {
+        const sortedCards = this.cards
+            .filter((card) => !card.parentCardId)
+            .sort((prevCard, card) => {
+                const prevCardVotes = this.votes.filter((vote) => vote.parentCardId === prevCard.id).length;
+                const cardVotes = this.votes.filter((vote) => vote.parentCardId === card.id).length;
+
+                if (prevCardVotes > cardVotes) return -1;
+                else if (prevCardVotes < cardVotes) return 1;
+                else 0;
+            });
+
+        //TODO: optymalizacja tego czegoś XD
+        if (!this.discutionCardId) {
+            if (sortedCards.length === 0) return;
+            this.discutionCardId = sortedCards[0].id;
+            return;
+        }
+
+        const currentCardIndex = sortedCards.findIndex((card) => card.id === this.discutionCardId);
+
+        if (currentCardIndex === sortedCards.length - 1) {
+            this.discutionCardId = sortedCards[currentCardIndex].id;
+            return;
+        };
+
+        this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+    }
+
+    previousDiscussionCard() {
+        const sortedCards = this.cards
+            .filter((card) => !card.parentCardId)
+            .sort((prevCard, card) => {
+                const prevCardVotes = this.votes.filter((vote) => vote.parentCardId === prevCard.id).length;
+                const cardVotes = this.votes.filter((vote) => vote.parentCardId === card.id).length;
+
+                if (prevCardVotes > cardVotes) return -1;
+                else if (prevCardVotes < cardVotes) return 1;
+                else 0;
+            }).reverse();
+
+        //TODO: optymalizacja tego czegoś XD
+        if (!this.discutionCardId) {
+            if (sortedCards.length === 0) return;
+            this.discutionCardId = sortedCards[0].id;
+            return;
+        }
+
+        const currentCardIndex = sortedCards.findIndex((card) => card.id === this.discutionCardId);
+
+        if (currentCardIndex === sortedCards.length - 1) {
+            this.discutionCardId = null;
+            return;
+        };
+
+        this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+
     }
 
     pushCardToEnd(cardId: string): Card {
