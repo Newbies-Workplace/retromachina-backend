@@ -1,266 +1,309 @@
-import { RoomState } from "src/utils/validator/roomstate.validator";
-import { RoomDataResponse } from "../interfaces/response.interface";
-import { ScrumMaster, User, Card, RetroColumn, Vote, ActionPoint } from "../interfaces/retroRoom.interface";
+import { RoomState } from 'src/utils/validator/roomstate.validator';
+import { RoomDataResponse } from '../interfaces/response.interface';
+import {
+  ScrumMaster,
+  User,
+  Card,
+  RetroColumn,
+  Vote,
+  ActionPoint,
+} from '../interfaces/retroRoom.interface';
 import { v4 as uuid } from 'uuid';
 
 export class RetroRoom {
-    scrumData: ScrumMaster;
-    usersWriting: number = 0;
-    usersReady: number = 0;
+  scrumData: ScrumMaster;
+  usersWriting = 0;
+  usersReady = 0;
 
-    users: Map<string, User> = new Map();
-    
-    createdDate: Date;
-    roomState: RoomState;
-    maxVotes?: number = 3;
-    timerEnds?: number = null;
-    discutionCardId = null;
+  users: Map<string, User> = new Map();
 
-    cards: Card[] = [];
-    votes: Vote[] = [];
-    actionPoints: ActionPoint[] = [];
-    
-    constructor(public id: string, public teamId: string, public retroColumns: RetroColumn[]) {
-        this.createdDate = new Date();
-        this.roomState = "reflection";
-    }
-    
-    getFrontData() {
-        const tempUsers = Array.from(this.users.values())
+  createdDate: Date;
+  roomState: RoomState;
+  maxVotes?: number = 3;
+  timerEnds?: number = null;
+  discutionCardId = null;
 
-        const roomData: RoomDataResponse = {
-            id: this.id,
-            teamId: this.teamId,
-            createdDate: this.createdDate,
-            maxVotes: this.maxVotes,
-            usersReady: this.usersReady,
-            roomState: this.roomState,
-            timerEnds: this.timerEnds,
-            cards: this.cards,
-            votes: this.votes,
-            discutionCardId: this.discutionCardId,
-            actionPoints: this.actionPoints,
-            retroColumns: this.retroColumns.map((column) => {
-                column.cards = this.cards.filter((card) => {
-                    return card.columnId == column.id;
-                });
-                column.isWriting = column.usersWriting > 0;
-                column.teamCardsAmount = column.cards.length;
-                return column;
-            }),
-            users: tempUsers.map((user) => {
-                return {
-                    id: user.userId,
-                    isReady: user.isReady,
-                    isWriting: user.isWriting
-                };
-            })
-        }
-        
-        return roomData;
-    }
-    
-    setVoteAmount(value: number) {
-        this.maxVotes = value;
+  cards: Card[] = [];
+  votes: Vote[] = [];
+  actionPoints: ActionPoint[] = [];
 
-        const userVotes = {};
+  constructor(
+    public id: string,
+    public teamId: string,
+    public retroColumns: RetroColumn[],
+  ) {
+    this.createdDate = new Date();
+    this.roomState = 'reflection';
+  }
 
-        const votesCopy = [...this.votes];
-        votesCopy.reverse();
+  getFrontData() {
+    const tempUsers = Array.from(this.users.values());
 
-        const filteredVotes = votesCopy.filter((vote) => {
-            let voter = userVotes[vote.voterId];
-
-            if (!voter) {
-                userVotes[vote.voterId] = { amount: 0 };
-                voter = userVotes[vote.voterId];
-            }
-
-            if (voter.amount < this.maxVotes) {
-                userVotes[vote.voterId].amount++;
-                return true;
-            }
-
-            return false;
+    const roomData: RoomDataResponse = {
+      id: this.id,
+      teamId: this.teamId,
+      createdDate: this.createdDate,
+      maxVotes: this.maxVotes,
+      usersReady: this.usersReady,
+      roomState: this.roomState,
+      timerEnds: this.timerEnds,
+      cards: this.cards,
+      votes: this.votes,
+      discutionCardId: this.discutionCardId,
+      actionPoints: this.actionPoints,
+      retroColumns: this.retroColumns.map((column) => {
+        column.cards = this.cards.filter((card) => {
+          return card.columnId == column.id;
         });
+        column.isWriting = column.usersWriting > 0;
+        column.teamCardsAmount = column.cards.length;
+        return column;
+      }),
+      users: tempUsers.map((user) => {
+        return {
+          id: user.userId,
+          isReady: user.isReady,
+          isWriting: user.isWriting,
+        };
+      }),
+    };
 
-        filteredVotes.reverse();
-        this.votes = filteredVotes;
+    return roomData;
+  }
+
+  setVoteAmount(value: number) {
+    this.maxVotes = value;
+
+    const userVotes = {};
+
+    const votesCopy = [...this.votes];
+    votesCopy.reverse();
+
+    const filteredVotes = votesCopy.filter((vote) => {
+      let voter = userVotes[vote.voterId];
+
+      if (!voter) {
+        userVotes[vote.voterId] = { amount: 0 };
+        voter = userVotes[vote.voterId];
+      }
+
+      if (voter.amount < this.maxVotes) {
+        userVotes[vote.voterId].amount++;
+        return true;
+      }
+
+      return false;
+    });
+
+    filteredVotes.reverse();
+    this.votes = filteredVotes;
+  }
+
+  setScrum(userId: string) {
+    this.scrumData = {
+      userId,
+    };
+  }
+
+  setReady(socketId: string, readyState: boolean) {
+    const user = this.users.get(socketId);
+    user.isReady = readyState;
+  }
+
+  addUser(socketId: string, userId: string) {
+    const result = Array.from(this.users.entries()).find(([key, localUser]) => {
+      return localUser.userId == userId;
+    });
+
+    if (!result) {
+      this.users.set(socketId, {
+        userId,
+        isReady: false,
+        isWriting: false,
+        writingInColumns: [],
+      });
+    } else {
+      this.users.delete(result[0]);
+      this.users.set(socketId, result[1]);
     }
+  }
 
-    setScrum(userId: string) {
-        this.scrumData = {
-            userId
-        }
+  removeUser(socketId: string, userId: string) {
+    const result = Array.from(this.users.entries()).find(([key, localUser]) => {
+      return localUser.userId == userId;
+    });
+
+    if (result) {
+      this.users.delete(result[0]);
     }
+  }
 
-    setReady(socketId: string, readyState: boolean){
-        const user = this.users.get(socketId);
-        user.isReady = readyState;
-    }
+  addCardToCard(parentCardId: string, cardId: string) {
+    const card = this.pushCardToEnd(cardId);
+    const parentCard = this.cards.find((card) => card.id === parentCardId);
+    const childCards = this.cards.filter(
+      (card) => card.parentCardId === cardId,
+    );
 
-    addUser(socketId: string, userId: string) {
-        const result = Array.from(this.users.entries()).find(([key, localUser]) => {
-            return localUser.userId == userId;
-        });
+    childCards.forEach((card) => {
+      this.pushCardToEnd(card.id);
+      card.parentCardId = parentCardId;
+      card.columnId = parentCard.columnId;
+    });
 
-        if (!result){
-            this.users.set(socketId, {
-                userId,
-                isReady: false,
-                isWriting: false,
-                writingInColumns: []
-            });
-        } else {
-            this.users.delete(result[0]);
-            this.users.set(socketId, result[1]);
-        }
-    }
+    card.parentCardId = parentCardId;
+    card.columnId = parentCard.columnId;
+  }
 
-    addCardToCard(parentCardId: string, cardId: string) {
-        const card = this.pushCardToEnd(cardId);
-        const parentCard = this.cards.find((card) => card.id === parentCardId);
-        const childCards = this.cards.filter((card) => card.parentCardId === cardId);
+  addVote(userId: string, parentCardId: string) {
+    this.votes.unshift({
+      parentCardId,
+      voterId: userId,
+    });
+  }
 
-        childCards.forEach((card) => {
-            this.pushCardToEnd(card.id);
-            card.parentCardId = parentCardId;
-            card.columnId = parentCard.columnId;
-        });
+  addActionPoint(text: string, ownerId: string) {
+    this.actionPoints.push({
+      id: uuid(),
+      text,
+      ownerId,
+      parentCardId: this.discutionCardId,
+    });
+  }
 
-        card.parentCardId = parentCardId;
-        card.columnId = parentCard.columnId;
-    }
+  moveCardToColumn(cardId: string, columnId: string) {
+    const card = this.pushCardToEnd(cardId);
+    card.columnId = columnId;
 
-    addVote(userId: string, parentCardId: string){
-        this.votes.unshift({
-            parentCardId,
-            voterId: userId
-        });
-    }
-
-    addActionPoint(text: string, ownerId: string) {
-        this.actionPoints.push({
-            id: uuid(),
-            text,
-            ownerId,
-            parentCardId: this.discutionCardId
-        });
-    }
-
-    moveCardToColumn(cardId: string, columnId: string){
-        const card = this.pushCardToEnd(cardId);
+    if (!card.parentCardId) {
+      const groupedCards = this.cards.filter(
+        (_card) => _card.parentCardId === card.id,
+      );
+      groupedCards.forEach((card) => {
         card.columnId = columnId;
-
-        if (!card.parentCardId) {
-            const groupedCards = this.cards.filter((_card) => _card.parentCardId === card.id);
-            groupedCards.forEach((card) => {
-                card.columnId = columnId;
-            });
-        }
-
-        card.parentCardId = null;
+      });
     }
 
-    deleteActionPoint(actionPointId: string) {
-        this.actionPoints = this.actionPoints.filter((actionPoint) => actionPoint.id !== actionPointId);
+    card.parentCardId = null;
+  }
+
+  deleteActionPoint(actionPointId: string) {
+    this.actionPoints = this.actionPoints.filter(
+      (actionPoint) => actionPoint.id !== actionPointId,
+    );
+  }
+
+  removeVote(userId: string, parentCardId: string) {
+    const voteIndex = this.votes.findIndex(
+      (vote) => vote.parentCardId === parentCardId && vote.voterId === userId,
+    );
+    this.votes.splice(voteIndex, 1);
+  }
+
+  changeState(roomState: RoomState) {
+    // TODO: cośtam się dzieje przy zmianie stanu
+    this.timerEnds = null;
+    this.roomState = roomState;
+
+    this.usersReady = 0;
+    for (const [key, user] of this.users) {
+      user.isReady = false;
+    }
+  }
+
+  changeActionPointOwner(actionPointId: string, newOwnerId: string) {
+    const actionPoint = this.actionPoints.find(
+      (actionPoint) => actionPoint.id === actionPointId,
+    );
+    actionPoint.ownerId = newOwnerId;
+  }
+
+  nextDiscussionCard() {
+    const sortedCards = this.cards
+      .filter((card) => !card.parentCardId)
+      .sort((prevCard, card) => {
+        const prevCardVotes = this.votes.filter(
+          (vote) => vote.parentCardId === prevCard.id,
+        ).length;
+        const cardVotes = this.votes.filter(
+          (vote) => vote.parentCardId === card.id,
+        ).length;
+
+        if (prevCardVotes > cardVotes) return -1;
+        else if (prevCardVotes < cardVotes) return 1;
+        else 0;
+      });
+
+    //TODO: optymalizacja tego czegoś XD
+    if (!this.discutionCardId) {
+      if (sortedCards.length === 0) return;
+      this.discutionCardId = sortedCards[0].id;
+      return;
     }
 
-    removeVote(userId: string, parentCardId: string) {
-        const voteIndex = this.votes.findIndex((vote) => vote.parentCardId === parentCardId && vote.voterId === userId);
-        this.votes.splice(voteIndex, 1);
+    const currentCardIndex = sortedCards.findIndex(
+      (card) => card.id === this.discutionCardId,
+    );
+
+    if (currentCardIndex === sortedCards.length - 1) {
+      this.discutionCardId = sortedCards[currentCardIndex].id;
+      return;
     }
 
-    changeState(roomState: RoomState) {
-        // TODO: cośtam się dzieje przy zmianie stanu
-        this.timerEnds = null;
-        this.roomState = roomState;
-        
-        this.usersReady = 0;
-        for (let [key, user] of this.users) {
-            user.isReady = false;
-        }
+    this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+  }
+
+  previousDiscussionCard() {
+    const sortedCards = this.cards
+      .filter((card) => !card.parentCardId)
+      .sort((prevCard, card) => {
+        const prevCardVotes = this.votes.filter(
+          (vote) => vote.parentCardId === prevCard.id,
+        ).length;
+        const cardVotes = this.votes.filter(
+          (vote) => vote.parentCardId === card.id,
+        ).length;
+
+        if (prevCardVotes > cardVotes) return -1;
+        else if (prevCardVotes < cardVotes) return 1;
+        else 0;
+      })
+      .reverse();
+
+    //TODO: optymalizacja tego czegoś XD
+    if (!this.discutionCardId) {
+      if (sortedCards.length === 0) return;
+      this.discutionCardId = sortedCards[0].id;
+      return;
     }
 
-    changeActionPointOwner(actionPointId: string, newOwnerId: string) {
-        const actionPoint = this.actionPoints.find((actionPoint) => actionPoint.id === actionPointId);
-        actionPoint.ownerId = newOwnerId;
+    const currentCardIndex = sortedCards.findIndex(
+      (card) => card.id === this.discutionCardId,
+    );
+
+    if (currentCardIndex === sortedCards.length - 1) {
+      this.discutionCardId = null;
+      return;
     }
 
-    nextDiscussionCard() {
-        const sortedCards = this.cards
-            .filter((card) => !card.parentCardId)
-            .sort((prevCard, card) => {
-                const prevCardVotes = this.votes.filter((vote) => vote.parentCardId === prevCard.id).length;
-                const cardVotes = this.votes.filter((vote) => vote.parentCardId === card.id).length;
+    this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+  }
 
-                if (prevCardVotes > cardVotes) return -1;
-                else if (prevCardVotes < cardVotes) return 1;
-                else 0;
-            });
+  pushCardToEnd(cardId: string): Card {
+    let card: Card;
+    let cardIndex: number;
 
-        //TODO: optymalizacja tego czegoś XD
-        if (!this.discutionCardId) {
-            if (sortedCards.length === 0) return;
-            this.discutionCardId = sortedCards[0].id;
-            return;
-        }
-
-        const currentCardIndex = sortedCards.findIndex((card) => card.id === this.discutionCardId);
-
-        if (currentCardIndex === sortedCards.length - 1) {
-            this.discutionCardId = sortedCards[currentCardIndex].id;
-            return;
-        };
-
-        this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+    for (let i = 0; i < this.cards.length; i++) {
+      if (this.cards[i].id === cardId) {
+        card = this.cards[i];
+        cardIndex = i;
+        break;
+      }
     }
 
-    previousDiscussionCard() {
-        const sortedCards = this.cards
-            .filter((card) => !card.parentCardId)
-            .sort((prevCard, card) => {
-                const prevCardVotes = this.votes.filter((vote) => vote.parentCardId === prevCard.id).length;
-                const cardVotes = this.votes.filter((vote) => vote.parentCardId === card.id).length;
+    this.cards.splice(cardIndex, 1);
+    this.cards.push(card);
 
-                if (prevCardVotes > cardVotes) return -1;
-                else if (prevCardVotes < cardVotes) return 1;
-                else 0;
-            }).reverse();
-
-        //TODO: optymalizacja tego czegoś XD
-        if (!this.discutionCardId) {
-            if (sortedCards.length === 0) return;
-            this.discutionCardId = sortedCards[0].id;
-            return;
-        }
-
-        const currentCardIndex = sortedCards.findIndex((card) => card.id === this.discutionCardId);
-
-        if (currentCardIndex === sortedCards.length - 1) {
-            this.discutionCardId = null;
-            return;
-        };
-
-        this.discutionCardId = sortedCards[currentCardIndex + 1].id;
-
-    }
-
-    pushCardToEnd(cardId: string): Card {
-        let card: Card;
-        let cardIndex: number;
-
-        for (let i = 0; i < this.cards.length; i++) {
-            if (this.cards[i].id === cardId) {
-                card = this.cards[i];
-                cardIndex = i;
-                break;
-            }
-        }
-
-        this.cards.splice(cardIndex, 1);
-        this.cards.push(card);
-
-        return card;
-    }
+    return card;
+  }
 }

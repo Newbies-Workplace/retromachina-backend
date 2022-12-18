@@ -6,6 +6,6 @@ import { UserService } from './user.service';
 @Module({
   controllers: [UserController],
   providers: [UserService, JwtStrategy],
-  exports: [UserService]
+  exports: [UserService],
 })
 export class UserModule {}

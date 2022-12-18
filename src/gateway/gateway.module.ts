@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
-    providers: [RetroGateway, GatewayService, JwtService, PrismaService],
-    exports: [GatewayService]
+  providers: [RetroGateway, GatewayService, JwtService, PrismaService],
+  exports: [GatewayService],
 })
 export class GatewayModule {}

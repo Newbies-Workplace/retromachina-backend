@@ -1,63 +1,63 @@
 export interface ReadyPayload {
-    readyState: true
+  readyState: true;
 }
 
 export interface NewCardPayload {
-    id: string,
-    text: string,
-    columnId: string,
-    cardId: string,
+  id: string;
+  text: string;
+  columnId: string;
+  cardId: string;
 }
 
 export interface DeleteCardPayload {
-    cardId: string
+  cardId: string;
 }
 
 export interface WriteStatePayload {
-    writeState: boolean,
-    columnId: string
+  writeState: boolean;
+  columnId: string;
 }
 
 export interface RoomStatePayload {
-    roomState: "reflection" | "group" | "vote" | "discuss" | "summary"
+  roomState: 'reflection' | 'group' | 'vote' | 'discuss' | 'summary';
 }
 
 export interface ChangeTimerPayload {
-    timestamp: number
+  timestamp: number;
 }
 
 export interface VoteOnCardPayload {
-    parentCardId: string;
+  parentCardId: string;
 }
 
 export interface RemoveVoteOnCardPayload {
-    parentCardId: string;
+  parentCardId: string;
 }
 
 export interface ChangeVoteAmountPayload {
-    votesAmount: number;
+  votesAmount: number;
 }
 
 export interface CardAddToCardPayload {
-    parentCardId: string;
-    cardId: string;
+  parentCardId: string;
+  cardId: string;
 }
 
 export interface MoveCardToColumnPayload {
-    columnId: string;
-    cardId: string;
+  columnId: string;
+  cardId: string;
 }
 
 export interface AddActionPointPayload {
-    text: string;
-    ownerId: string;
+  text: string;
+  ownerId: string;
 }
 
 export interface DeleteActionPointPayload {
-    actionPointId: string;
+  actionPointId: string;
 }
 
 export interface ChangeActionPointOwnerPayload {
-    actionPointId: string,
-    ownerId: string
+  actionPointId: string;
+  ownerId: string;
 }

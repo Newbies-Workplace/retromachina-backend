@@ -57,12 +57,9 @@ export class TeamController {
 
   @UseGuards(JwtGuard)
   @Delete(':id')
-  async deleteTeam(
-    @User() user: TokenUser,
-    @Param('id') teamId: string
-  ) {
+  async deleteTeam(@User() user: TokenUser, @Param('id') teamId: string) {
     if (!user.isScrum) throw new ForbiddenException();
-    
+
     await this.teamService.deleteTeam(teamId);
   }
 }
