@@ -3,12 +3,12 @@ export type TokenUser = {
   nick: string;
   email: string;
   google_id: string;
-  isScrum: Boolean;
+  isScrum: boolean;
 };
 
 export type Token = {
-    user: TokenUser
-}
+  user: TokenUser;
+};
 
 export type GoogleUser = {
   id: string;

@@ -24,9 +24,9 @@ export class UserService {
     });
 
     const getTeams = new Promise(async (resolve, reject) => {
-      let teams = Array();
-      for (let userTeam of userTeams) {
-        let team: Team = await this.prismaService.team.findFirst({
+      const teams = [];
+      for (const userTeam of userTeams) {
+        const team: Team = await this.prismaService.team.findFirst({
           where: {
             id: userTeam.team_id,
           },
@@ -68,9 +68,9 @@ export class UserService {
     if (teamsInfo.length === 0) throw new NotFoundException();
 
     const getUsers = new Promise(async (resolve, reject) => {
-      let users = Array();
-      for (let info of teamsInfo) {
-        let user: User = await this.prismaService.user.findFirst({
+      const users = [];
+      for (const info of teamsInfo) {
+        const user: User = await this.prismaService.user.findFirst({
           where: {
             id: info.user_id,
           },

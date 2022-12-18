@@ -7,6 +7,6 @@ import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [GatewayModule],
   providers: [RetroService, JwtService],
-  controllers: [RetroController]
+  controllers: [RetroController],
 })
 export class RetroModule {}

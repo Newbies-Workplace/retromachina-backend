@@ -1,16 +1,30 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards, Header, Param } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+  Header,
+  Param,
+} from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { GatewayService } from 'src/gateway/gateway.service';
 import { RetroService } from './retro.service';
 import { v4 as uuid } from 'uuid';
-import { RetroColumn } from "src/gateway/interfaces/retroRoom.interface";
+import { RetroColumn } from 'src/gateway/interfaces/retroRoom.interface';
 import { User } from 'src/utils/decorators/user.decorator';
 import { TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('retros')
 export class RetroController {
-  constructor(private retroService: RetroService, private gatewayService: GatewayService, private prismaService: PrismaService) {
+  constructor(
+    private retroService: RetroService,
+    private gatewayService: GatewayService,
+    private prismaService: PrismaService,
+  ) {
     //this.gatewayService.addRetroRoom("0251185b-8d7b-4b44-8891-d7d0274e7cb6", "uhuhu", Array<RetroColumn>());
   }
 
@@ -22,7 +36,7 @@ export class RetroController {
     return await this.retroService.getRetroDates(teamId);
   }
 
-  @Get(":retroId")
+  @Get(':retroId')
   @UseGuards(JwtGuard)
   async getRetro(@Param('retroId') retroId: string) {
     if (retroId.trim().length === 0)
@@ -41,8 +55,8 @@ export class RetroController {
         id: retroId,
         date: new Date(),
         is_running: true,
-        team_id: body.teamId
-      }
+        team_id: body.teamId,
+      },
     });
 
     const room = await this.gatewayService.addRetroRoom(
@@ -57,7 +71,7 @@ export class RetroController {
     room.setScrum(user.id);
 
     return {
-      retro_id: retroId
-    }
+      retro_id: retroId,
+    };
   }
 }

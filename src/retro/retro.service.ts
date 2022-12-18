@@ -8,8 +8,8 @@ export class RetroService implements OnModuleInit {
   async onModuleInit() {
     await this.prismaService.retrospective.updateMany({
       data: {
-        is_running: false
-      }
+        is_running: false,
+      },
     });
   }
 
@@ -29,8 +29,8 @@ export class RetroService implements OnModuleInit {
   async getRetro(retroId: string) {
     const retro = await this.prismaService.retrospective.findFirst({
       where: {
-        id: retroId
-      }
+        id: retroId,
+      },
     });
 
     return retro;

@@ -80,9 +80,9 @@ export class TeamService {
 
     await this.prismaService.invite.deleteMany({
       where: {
-        team_id: checkTeam.id
-      }
-    })
+        team_id: checkTeam.id,
+      },
+    });
 
     // Add users to teamUsers
     await this.addUsersToTeamUsers(editTeamDto.emails, checkTeam.id, user.id);
@@ -101,8 +101,8 @@ export class TeamService {
           data: {
             email: email,
             team_id: teamId,
-            from_scrum_id: scrumId
-          }
+            from_scrum_id: scrumId,
+          },
         });
 
         return;
@@ -120,8 +120,8 @@ export class TeamService {
   async deleteTeam(teamId: string) {
     await this.prismaService.team.delete({
       where: {
-        id: teamId
-      }
-    })
+        id: teamId,
+      },
+    });
   }
 }

@@ -25,8 +25,8 @@ export class TaskService {
       return {
         id: task.id,
         ownerId: task.owner_id,
-        text: task.description
-      }
+        text: task.description,
+      };
     });
   }
 
