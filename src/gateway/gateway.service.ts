@@ -401,15 +401,19 @@ export class GatewayService {
   }
 
   handleUserDisconnect(server: Server, client: Socket) {
-    const user = this.users.get(client.id);
-    const roomId = user.roomId;
-    const room = this.retroRooms.get(user.roomId);
+    try {
+      const user = this.users.get(client.id);
+      const roomId = user.roomId;
+      const room = this.retroRooms.get(user.roomId);
 
-    this.users.delete(client.id);
-    room.removeUser(client.id, user.user.id);
+      this.users.delete(client.id);
+      room.removeUser(client.id, user.user.id);
 
-    server.to(roomId).emit('event_room_sync', {
-      roomData: room.getFrontData(),
-    });
+      server.to(roomId).emit('event_room_sync', {
+        roomData: room.getFrontData(),
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
