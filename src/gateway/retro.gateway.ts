@@ -10,6 +10,7 @@ import {
   AddActionPointPayload,
   CardAddToCardPayload,
   ChangeActionPointOwnerPayload,
+  ChangeCurrentDiscussCardPayload,
   ChangeTimerPayload,
   ChangeVoteAmountPayload,
   DeleteActionPointPayload,
@@ -133,14 +134,16 @@ export class RetroGateway implements OnGatewayDisconnect {
     );
   }
 
-  @SubscribeMessage('command_next_discussion_card')
-  handleNextDiscussionCard(client: Socket) {
-    this.gatewayService.handleNextDiscussionCard(this.server, client);
-  }
-
-  @SubscribeMessage('command_previous_discussion_card')
-  handlePreviousDiscussionCard(client: Socket) {
-    this.gatewayService.handlePreviousDiscussionCard(this.server, client);
+  @SubscribeMessage('command_change_discussion_card')
+  handleChangeDiscussionCard(
+    client: Socket,
+    payload: ChangeCurrentDiscussCardPayload,
+  ) {
+    this.gatewayService.handleChangeDiscussionCard(
+      this.server,
+      client,
+      payload,
+    );
   }
 
   handleDisconnect(client: Socket) {
