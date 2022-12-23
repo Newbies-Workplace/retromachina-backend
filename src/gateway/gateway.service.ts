@@ -7,7 +7,7 @@ import { TokenUser } from 'src/types';
 import {
   AddActionPointPayload,
   CardAddToCardPayload,
-  ChangeActionPointOwnerPayload,
+  ChangeActionPointOwnerPayload, ChangeCurrentDiscussCardPayload,
   DeleteActionPointPayload,
   MoveCardToColumnPayload,
   NewCardPayload,
@@ -340,18 +340,15 @@ export class GatewayService {
     this.emitRoomDataTo(roomId, server, room);
   }
 
-  handleNextDiscussionCard(server: Server, client: Socket) {
+  handleChangeDiscussionCard(
+    server: Server,
+    client: Socket,
+    data: ChangeCurrentDiscussCardPayload,
+  ) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.nextDiscussionCard();
-    this.emitRoomDataTo(roomId, server, room);
-  }
-  handlePreviousDiscussionCard(server: Server, client: Socket) {
-    const roomId = this.users.get(client.id).roomId;
-    const room = this.retroRooms.get(roomId);
-
-    room.previousDiscussionCard();
+    room.changeDiscussionCard(data.cardId);
     this.emitRoomDataTo(roomId, server, room);
   }
 

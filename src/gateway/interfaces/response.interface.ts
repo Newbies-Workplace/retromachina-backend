@@ -21,7 +21,7 @@ export interface RoomDataResponse {
   usersReady: number;
   roomState: RoomState;
   timerEnds: number;
-  discutionCardId: string | null;
+  discussionCardId: string | null;
   cards: Card[];
   retroColumns: RetroColumn[];
   actionPoints: ActionPoint[];

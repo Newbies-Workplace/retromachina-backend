@@ -21,7 +21,7 @@ export class RetroRoom {
   roomState: RoomState;
   maxVotes?: number = 3;
   timerEnds?: number = null;
-  discutionCardId = null;
+  discussionCardId = null;
 
   cards: Card[] = [];
   votes: Vote[] = [];
@@ -49,7 +49,7 @@ export class RetroRoom {
       timerEnds: this.timerEnds,
       cards: this.cards,
       votes: this.votes,
-      discutionCardId: this.discutionCardId,
+      discussionCardId: this.discussionCardId,
       actionPoints: this.actionPoints,
       retroColumns: this.retroColumns.map((column) => {
         column.cards = this.cards.filter((card) => {
@@ -167,7 +167,7 @@ export class RetroRoom {
       id: uuid(),
       text,
       ownerId,
-      parentCardId: this.discutionCardId,
+      parentCardId: this.discussionCardId,
     });
   }
 
@@ -201,13 +201,16 @@ export class RetroRoom {
   }
 
   changeState(roomState: RoomState) {
-    // TODO: cośtam się dzieje przy zmianie stanu
     this.timerEnds = null;
     this.roomState = roomState;
 
     this.usersReady = 0;
     for (const [key, user] of this.users) {
       user.isReady = false;
+    }
+
+    if (roomState === 'discuss') {
+      this.initDiscussionCard();
     }
   }
 
@@ -218,75 +221,8 @@ export class RetroRoom {
     actionPoint.ownerId = newOwnerId;
   }
 
-  nextDiscussionCard() {
-    const sortedCards = this.cards
-      .filter((card) => !card.parentCardId)
-      .sort((prevCard, card) => {
-        const prevCardVotes = this.votes.filter(
-          (vote) => vote.parentCardId === prevCard.id,
-        ).length;
-        const cardVotes = this.votes.filter(
-          (vote) => vote.parentCardId === card.id,
-        ).length;
-
-        if (prevCardVotes > cardVotes) return -1;
-        else if (prevCardVotes < cardVotes) return 1;
-        else 0;
-      });
-
-    //TODO: optymalizacja tego czegoś XD
-    if (!this.discutionCardId) {
-      if (sortedCards.length === 0) return;
-      this.discutionCardId = sortedCards[0].id;
-      return;
-    }
-
-    const currentCardIndex = sortedCards.findIndex(
-      (card) => card.id === this.discutionCardId,
-    );
-
-    if (currentCardIndex === sortedCards.length - 1) {
-      this.discutionCardId = sortedCards[currentCardIndex].id;
-      return;
-    }
-
-    this.discutionCardId = sortedCards[currentCardIndex + 1].id;
-  }
-
-  previousDiscussionCard() {
-    const sortedCards = this.cards
-      .filter((card) => !card.parentCardId)
-      .sort((prevCard, card) => {
-        const prevCardVotes = this.votes.filter(
-          (vote) => vote.parentCardId === prevCard.id,
-        ).length;
-        const cardVotes = this.votes.filter(
-          (vote) => vote.parentCardId === card.id,
-        ).length;
-
-        if (prevCardVotes > cardVotes) return -1;
-        else if (prevCardVotes < cardVotes) return 1;
-        else 0;
-      })
-      .reverse();
-
-    //TODO: optymalizacja tego czegoś XD
-    if (!this.discutionCardId) {
-      if (sortedCards.length === 0) return;
-      this.discutionCardId = sortedCards[0].id;
-      return;
-    }
-
-    const currentCardIndex = sortedCards.findIndex(
-      (card) => card.id === this.discutionCardId,
-    );
-
-    if (currentCardIndex === sortedCards.length - 1) {
-      this.discutionCardId = null;
-      return;
-    }
-
-    this.discutionCardId = sortedCards[currentCardIndex + 1].id;
+  changeDiscussionCard(cardId: string) {
+    this.discussionCardId = cardId;
   }
 
   pushCardToEnd(cardId: string): Card {
@@ -305,5 +241,32 @@ export class RetroRoom {
     this.cards.push(card);
 
     return card;
+  }
+
+  private initDiscussionCard() {
+    const sortedCards = this.cards
+      .filter((card) => !card.parentCardId)
+      .sort((prevCard, card) => {
+        const prevCardVotes = this.votes.filter(
+          (vote) =>
+            vote.parentCardId === prevCard.id ||
+            vote.parentCardId === prevCard.parentCardId,
+        ).length;
+        const cardVotes = this.votes.filter(
+          (vote) =>
+            vote.parentCardId === card.id ||
+            vote.parentCardId === card.parentCardId,
+        ).length;
+
+        if (prevCardVotes > cardVotes) {
+          return -1;
+        } else if (prevCardVotes < cardVotes) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+
+    this.discussionCardId = sortedCards[0].id;
   }
 }
