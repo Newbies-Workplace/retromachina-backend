@@ -245,28 +245,24 @@ export class RetroRoom {
 
   private initDiscussionCard() {
     const sortedCards = this.cards
-      .filter((card) => !card.parentCardId)
-      .sort((prevCard, card) => {
-        const prevCardVotes = this.votes.filter(
-          (vote) =>
-            vote.parentCardId === prevCard.id ||
-            vote.parentCardId === prevCard.parentCardId,
-        ).length;
-        const cardVotes = this.votes.filter(
-          (vote) =>
-            vote.parentCardId === card.id ||
-            vote.parentCardId === card.parentCardId,
-        ).length;
+      .filter((c) => c.parentCardId === null)
+      .map((parent) => {
+        const groupCards = [
+          parent,
+          ...this.cards.filter((c) => c.parentCardId === parent.id),
+        ];
+        const count = groupCards
+          .map((c) => this.votes.filter((v) => v.parentCardId === c.id).length)
+          .reduce((a, c) => a + c, 0);
 
-        if (prevCardVotes > cardVotes) {
-          return -1;
-        } else if (prevCardVotes < cardVotes) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
+        return {
+          parentCardId: parent.id,
+          cards: groupCards,
+          votes: count,
+        };
+      })
+      .sort((a, b) => b.votes - a.votes);
 
-    this.discussionCardId = sortedCards[0].id;
+    this.discussionCardId = sortedCards[0].parentCardId;
   }
 }
