@@ -105,11 +105,6 @@ export class RetroRoom {
     };
   }
 
-  setReady(socketId: string, readyState: boolean) {
-    const user = this.users.get(socketId);
-    user.isReady = readyState;
-  }
-
   addUser(socketId: string, userId: string) {
     const result = Array.from(this.users.entries()).find(([key, localUser]) => {
       return localUser.userId == userId;
@@ -204,10 +199,7 @@ export class RetroRoom {
     this.timerEnds = null;
     this.roomState = roomState;
 
-    this.usersReady = 0;
-    for (const [key, user] of this.users) {
-      user.isReady = false;
-    }
+    this.clearUsersReady();
 
     if (roomState === 'discuss') {
       this.initDiscussionCard();
@@ -223,6 +215,7 @@ export class RetroRoom {
 
   changeDiscussionCard(cardId: string) {
     this.discussionCardId = cardId;
+    this.clearUsersReady();
   }
 
   pushCardToEnd(cardId: string): Card {
@@ -241,6 +234,13 @@ export class RetroRoom {
     this.cards.push(card);
 
     return card;
+  }
+
+  private clearUsersReady() {
+    this.usersReady = 0;
+    for (const [key, user] of this.users) {
+      user.isReady = false;
+    }
   }
 
   private initDiscussionCard() {
