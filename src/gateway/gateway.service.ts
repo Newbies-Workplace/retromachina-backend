@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { TaskState, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenUser } from 'src/types';
@@ -22,7 +22,7 @@ import { RoomStateValidator } from 'src/utils/validator/roomstate.validator';
 enum ErrorTypes {
   RetrospectiveNotFound = 'RetrospectiveNotFound',
   UserNotFound = 'UserNotFound',
-  UnauthorizedScrum = 'UnauthorizedScrum',
+  Unauthorized = 'Unauthorized',
   JwtError = 'JwtError',
   InvalidRoomState = 'InvalidRoomState',
 }
@@ -65,6 +65,13 @@ export class GatewayService {
       where: {
         id: user.id,
       },
+      include: {
+        TeamUsers: {
+          where: {
+            team_id: room.teamId
+          }
+        }
+      }
     });
 
     this.users.set(client.id, {
@@ -89,13 +96,21 @@ export class GatewayService {
       } else {
         this.doException(
           client,
-          ErrorTypes.UnauthorizedScrum,
+          ErrorTypes.Unauthorized,
           `User (${user.id}) is not authorized to be a SCRUM_MASTER of this team`,
         );
         return;
       }
     } else {
-      //TODO: Czy użytkownik jest w teamie
+      if (userQuery.TeamUsers.length === 0) {
+        this.doException(
+          client,
+          ErrorTypes.Unauthorized,
+          `User (${user.id}) is not in team (${room.teamId})`,
+        );
+        return;
+      }
+
       room.addUser(client.id, user.id);
     }
 
@@ -287,16 +302,20 @@ export class GatewayService {
     const roomUser = room.users.get(client.id);
 
     if (roomUser.userId === room.scrumData.userId) {
-      // TODO: Stworzenie podsumowania i handler zamknięcia
+      const board = await this.prismaService.board.findUnique({
+        where: {
+          team_id: room.teamId
+        }
+      })
 
       await this.prismaService.task.createMany({
         data: room.actionPoints.map((actionPoint) => {
           return {
             description: actionPoint.text,
-            state: TaskState.FREEZED,
             owner_id: actionPoint.ownerId,
             retro_id: room.id,
             team_id: room.teamId,
+            column_id: board.default_column_id,
           };
         }),
       });

@@ -6,7 +6,6 @@ import {
   Post,
   Query,
   UseGuards,
-  Header,
   Param,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
@@ -24,9 +23,7 @@ export class RetroController {
     private retroService: RetroService,
     private gatewayService: GatewayService,
     private prismaService: PrismaService,
-  ) {
-    //this.gatewayService.addRetroRoom("0251185b-8d7b-4b44-8891-d7d0274e7cb6", "uhuhu", Array<RetroColumn>());
-  }
+  ) {}
 
   @Get()
   @UseGuards(JwtGuard)

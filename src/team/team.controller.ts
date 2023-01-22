@@ -1,15 +1,15 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
+  HttpCode,
   Param,
   Post,
-  UseGuards,
-  ForbiddenException,
-  Body,
   Put,
-  BadRequestException,
-  HttpCode,
-  Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
 import { TokenUser } from 'src/types';
@@ -17,6 +17,7 @@ import { User } from 'src/utils/decorators/user.decorator';
 import { CreateTeamDto } from './dto/createTeam.dto';
 import { EditTeamDto } from './dto/editTeam.dto';
 import { TeamService } from './team.service';
+import { EditBoardDto } from './dto/editBoard.dto';
 
 @Controller('teams')
 export class TeamController {
@@ -61,5 +62,26 @@ export class TeamController {
     if (!user.isScrum) throw new ForbiddenException();
 
     await this.teamService.deleteTeam(teamId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Put(':id/board')
+  async editBoard(
+    @User() user: TokenUser,
+    @Body() boardDto: EditBoardDto,
+    @Param('id') teamId: string,
+  ) {
+    if (!user.isScrum) throw new ForbiddenException();
+
+    await this.teamService.editBoard(teamId, boardDto);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get(':id/board')
+  async getBoard(
+    @User() user: TokenUser,
+    @Param('id') teamId: string,
+  ): Promise<EditBoardDto> {
+    return await this.teamService.getBoard(user, teamId);
   }
 }

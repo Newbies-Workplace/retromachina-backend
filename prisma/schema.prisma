@@ -19,6 +19,7 @@ model Team {
   Task          Task[]
   Retrospective Retrospective[]
   Invite        Invite[]
+  Board         Board?
 }
 
 model TeamUsers {
@@ -28,6 +29,26 @@ model TeamUsers {
 
   Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
   User User? @relation(fields: [user_id], references: [id])
+}
+
+model Board {
+  team_id           String        @id
+  default_column_id String
+
+  BoardColumns BoardColumn[]
+
+  Team Team @relation(fields: [team_id], references: [id], onDelete: Cascade)
+}
+
+model BoardColumn {
+  id          String  @id @default(uuid())
+  team_id     String
+  order       Int
+  name        String
+  color       String
+  Tasks       Task[]
+
+  Board Board @relation(fields: [team_id], references: [team_id], onDelete: Cascade)
 }
 
 model User {
@@ -45,15 +66,16 @@ model User {
 }
 
 model Task {
-  id          String    @id @default(uuid())
-  description String @db.Text
-  state       TaskState
+  id          String  @id @default(uuid())
+  description String  @db.Text
   owner_id    String
   retro_id    String
   team_id     String
+  column_id   String?
 
   User          User?          @relation(fields: [owner_id], references: [id])
   Team          Team?          @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  Column        BoardColumn?   @relation(fields: [column_id], references: [id])
   Retrospective Retrospective? @relation(fields: [retro_id], references: [id])
 }
 
@@ -81,11 +103,4 @@ model Invite {
 enum Role {
   USER
   SCRUM_MASTER
-}
-
-enum TaskState {
-  FREEZED
-  TO_DO
-  IN_PROGRESS
-  DONE
 }

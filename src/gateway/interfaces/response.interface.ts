@@ -3,7 +3,6 @@ import {
   ActionPoint,
   Card,
   RetroColumn,
-  User,
   Vote,
 } from './retroRoom.interface';
 
