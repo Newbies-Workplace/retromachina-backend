@@ -6,14 +6,10 @@ import {
   Post,
   Query,
   UseGuards,
-  Header,
   Param,
 } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt.guard';
-import { GatewayService } from 'src/gateway/gateway.service';
 import { RetroService } from './retro.service';
-import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/gateway/interfaces/retroRoom.interface';
 import { User } from 'src/utils/decorators/user.decorator';
 import { TokenUser } from 'src/types';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,7 +18,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class RetroController {
   constructor(
     private retroService: RetroService,
-    private prismaService: PrismaService
+    private prismaService: PrismaService,
   ) {
     //this.gatewayService.addRetroRoom("0251185b-8d7b-4b44-8891-d7d0274e7cb6", "uhuhu", Array<RetroColumn>());
   }
@@ -49,12 +45,14 @@ export class RetroController {
     const runningRetro = await this.prismaService.retrospective.findFirst({
       where: {
         is_running: true,
-        team_id: body.teamID
-      }
+        team_id: body.teamID,
+      },
     });
 
     if (runningRetro) {
-      throw new BadRequestException('One retro for this team is already running.');
+      throw new BadRequestException(
+        'One retro for this team is already running.',
+      );
     }
 
     return await this.retroService.createRetro(user.id, body);

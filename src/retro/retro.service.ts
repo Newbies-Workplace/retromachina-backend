@@ -1,15 +1,15 @@
 import { Body, Injectable, OnModuleInit } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common/exceptions';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TokenUser } from 'src/types';
-import { User } from 'src/utils/decorators/user.decorator';
 import { v4 as uuid } from 'uuid';
 import { RetroColumn } from 'src/gateway/interfaces/retroRoom.interface';
 import { GatewayService } from 'src/gateway/gateway.service';
 
 @Injectable()
 export class RetroService implements OnModuleInit {
-  constructor(private prismaService: PrismaService, private gatewayService: GatewayService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private gatewayService: GatewayService,
+  ) {}
   async onModuleInit() {
     await this.prismaService.retrospective.updateMany({
       data: {
@@ -40,7 +40,6 @@ export class RetroService implements OnModuleInit {
 
     return retro;
   }
-
 
   async createRetro(userId: string, @Body() body) {
     const retroId = uuid();
