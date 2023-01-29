@@ -22,8 +22,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class RetroController {
   constructor(
     private retroService: RetroService,
-    private gatewayService: GatewayService,
-    private prismaService: PrismaService,
+    private prismaService: PrismaService
   ) {
     //this.gatewayService.addRetroRoom("0251185b-8d7b-4b44-8891-d7d0274e7cb6", "uhuhu", Array<RetroColumn>());
   }
@@ -47,31 +46,17 @@ export class RetroController {
   @Post()
   @UseGuards(JwtGuard)
   async createRetro(@User() user: TokenUser, @Body() body) {
-    // TODO: Jedno retro na jeden team, validacja teamu
-
-    const retroId = uuid();
-    await this.prismaService.retrospective.create({
-      data: {
-        id: retroId,
-        date: new Date(),
+    const runningRetro = await this.prismaService.retrospective.findFirst({
+      where: {
         is_running: true,
-        team_id: body.teamId,
-      },
+        team_id: body.teamID
+      }
     });
 
-    const room = await this.gatewayService.addRetroRoom(
-      retroId,
-      body.teamId,
-      body.columns.map((column: RetroColumn) => {
-        column.id = uuid();
-        column.usersWriting = 0;
-        return column;
-      }),
-    );
-    room.setScrum(user.id);
+    if (runningRetro) {
+      throw new BadRequestException('One retro for this team is already running.');
+    }
 
-    return {
-      retro_id: retroId,
-    };
+    return await this.retroService.createRetro(user.id, body);
   }
 }
