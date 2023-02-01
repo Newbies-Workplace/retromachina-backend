@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { RetroService } from './retro.service';
-import { RetroController } from './retro.controller';
-import { GatewayModule } from 'src/gateway/gateway.module';
-import { JwtService } from '@nestjs/jwt';
+import { RetroService } from './domain/retro.service';
+import { RetroController } from './application/retro.controller';
+import { RetroGateway } from './application/retro.gateway';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [GatewayModule],
-  providers: [RetroService, JwtService],
+  imports: [AuthModule],
+  providers: [RetroService, RetroGateway],
   controllers: [RetroController],
 })
 export class RetroModule {}

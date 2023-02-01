@@ -1,5 +1,5 @@
-import { RoomState } from 'src/utils/validator/roomstate.validator';
-import { RoomDataResponse } from '../interfaces/response.interface';
+import { RoomState } from 'src/retro/application/roomstate.validator';
+import { RoomDataResponse } from '../../application/model/response.interface';
 import {
   ScrumMaster,
   User,
@@ -7,7 +7,7 @@ import {
   RetroColumn,
   Vote,
   ActionPoint,
-} from '../interfaces/retroRoom.interface';
+} from '../../application/model/retroRoom.interface';
 import { v4 as uuid } from 'uuid';
 
 export class RetroRoom {

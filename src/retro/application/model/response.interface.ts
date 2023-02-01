@@ -1,4 +1,4 @@
-import { RoomState } from 'src/utils/validator/roomstate.validator';
+import { RoomState } from 'src/retro/application/roomstate.validator';
 import {
   ActionPoint,
   Card,

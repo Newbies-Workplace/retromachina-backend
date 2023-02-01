@@ -34,4 +34,7 @@ ALTER TABLE `Board` ADD CONSTRAINT `Board_team_id_fkey` FOREIGN KEY (`team_id`) 
 ALTER TABLE `BoardColumn` ADD CONSTRAINT `BoardColumn_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Board`(`team_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Task` ADD CONSTRAINT `Task_Board_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Board`(`team_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Task` ADD CONSTRAINT `Task_column_id_fkey` FOREIGN KEY (`column_id`) REFERENCES `BoardColumn`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

@@ -1,10 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { MethodNotAllowedException } from '@nestjs/common/exceptions';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TokenUser } from 'src/types';
+import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { CreateTeamDto } from './dto/createTeam.dto';
 import { EditTeamDto } from './dto/editTeam.dto';
-import { BoardColumnDto, EditBoardDto } from './dto/editBoard.dto';
+import { BoardColumnDto, EditBoardDto } from '../board/application/board/editBoard.dto';
 import { BoardColumn } from '@prisma/client';
 import { v4 as uuid } from 'uuid';
 
@@ -27,7 +27,7 @@ export class TeamService {
     };
   }
 
-  async createTeam(user: TokenUser, createTeamDto: CreateTeamDto) {
+  async createTeam(user: JWTUser, createTeamDto: CreateTeamDto) {
     const team = await this.prismaService.team.create({
       data: {
         name: createTeamDto.name,
@@ -62,7 +62,7 @@ export class TeamService {
     await this.addUsersToTeamUsers(createTeamDto.emails, team.id, user.id);
   }
 
-  async editTeam(user: TokenUser, teamId: string, editTeamDto: EditTeamDto) {
+  async editTeam(user: JWTUser, teamId: string, editTeamDto: EditTeamDto) {
     const checkTeam = await this.prismaService.team.findFirst({
       where: {
         id: teamId,
@@ -138,116 +138,5 @@ export class TeamService {
         id: teamId,
       },
     });
-  }
-
-  async editBoard(teamId: string, boardDto: EditBoardDto) {
-    const board = await this.prismaService.board.findUnique({
-      where: {
-        team_id: teamId,
-      },
-      include: {
-        BoardColumns: true
-      }
-    })
-
-    const deletedColumns: BoardColumn[] = []
-    const existingColumns: BoardColumnDto[] = []
-    const createdColumns: BoardColumnDto[] = []
-
-    boardDto.columns.forEach((column) => {
-      if (board.BoardColumns.map(savedCol => savedCol.id).includes(column.id)) {
-        existingColumns.push(column)
-      } else {
-        createdColumns.push(column)
-      }
-    })
-    board.BoardColumns.forEach((column) => {
-      if (!boardDto.columns.map(boardCol => boardCol.id).includes(column.id)) {
-        deletedColumns.push(column)
-      }
-    })
-
-    // throw if trying to delete default column
-    if (![...createdColumns, ...existingColumns].map(column => column.id).includes(boardDto.defaultColumnId)) {
-      throw new BadRequestException("Cannot delete column that contains defaultColumnId")
-    }
-
-    await this.prismaService.boardColumn.createMany({
-      data: createdColumns.map(column => {
-        return {
-          id: column.id,
-          name: column.name,
-          color: column.color,
-          team_id: teamId,
-          order: column.order,
-        }
-      })
-    })
-    for (const column of existingColumns) {
-      await this.prismaService.boardColumn.update({
-        where: {
-          id: column.id,
-        },
-        data: {
-          name: column.name,
-          color: column.color,
-          team_id: teamId,
-          order: column.order,
-        }
-      })
-    }
-
-    // move cards in deleted columns to default column
-    await this.prismaService.task.updateMany({
-      where: {
-        column_id: {
-          in: deletedColumns.map(column => column.id),
-        }
-      },
-      data: {
-        column_id: boardDto.defaultColumnId,
-      }
-    })
-
-    // delete columns
-    await this.prismaService.boardColumn.deleteMany({
-      where: {
-        id: {
-          in: deletedColumns.map(column => column.id)
-        }
-      }
-    })
-  }
-
-  async getBoard(user: TokenUser, teamId: string): Promise<EditBoardDto> {
-    const board = await this.prismaService.board.findUnique({
-      where: {
-        team_id: teamId,
-      },
-      include: {
-        Team: {
-          include: {
-            TeamUser: true
-          }
-        },
-        BoardColumns: true
-      }
-    })
-
-    if (!board.Team.TeamUser.map(teamUser => teamUser.user_id).includes(user.id)) {
-      throw new ForbiddenException(`User ${user.id} not in team ${teamId}`)
-    }
-
-    return {
-      defaultColumnId: board.default_column_id,
-      columns: board.BoardColumns.map((column) => {
-        return {
-          id: column.id,
-          name: column.name,
-          color: column.color,
-          order: column.order,
-        }
-      })
-    }
   }
 }

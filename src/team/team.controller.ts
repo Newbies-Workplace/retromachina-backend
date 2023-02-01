@@ -11,13 +11,12 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { JwtGuard } from 'src/auth/guard/jwt.guard';
-import { TokenUser } from 'src/types';
-import { User } from 'src/utils/decorators/user.decorator';
+import { JwtGuard } from 'src/auth/jwt/jwt.guard';
+import { JWTUser } from 'src/auth/jwt/JWTUser';
+import { User } from 'src/auth/jwt/jwtuser.decorator';
 import { CreateTeamDto } from './dto/createTeam.dto';
 import { EditTeamDto } from './dto/editTeam.dto';
 import { TeamService } from './team.service';
-import { EditBoardDto } from './dto/editBoard.dto';
 
 @Controller('teams')
 export class TeamController {
@@ -35,7 +34,7 @@ export class TeamController {
   @UseGuards(JwtGuard)
   @Post()
   async createTeam(
-    @User() user: TokenUser,
+    @User() user: JWTUser,
     @Body() createTeamDto: CreateTeamDto,
   ) {
     if (!user.isScrum) throw new ForbiddenException();
@@ -47,7 +46,7 @@ export class TeamController {
   @Put(':id')
   @HttpCode(204)
   async editTeam(
-    @User() user: TokenUser,
+    @User() user: JWTUser,
     @Body() editTeamDto: EditTeamDto,
     @Param('id') teamId: string,
   ) {
@@ -58,30 +57,9 @@ export class TeamController {
 
   @UseGuards(JwtGuard)
   @Delete(':id')
-  async deleteTeam(@User() user: TokenUser, @Param('id') teamId: string) {
+  async deleteTeam(@User() user: JWTUser, @Param('id') teamId: string) {
     if (!user.isScrum) throw new ForbiddenException();
 
     await this.teamService.deleteTeam(teamId);
-  }
-
-  @UseGuards(JwtGuard)
-  @Put(':id/board')
-  async editBoard(
-    @User() user: TokenUser,
-    @Body() boardDto: EditBoardDto,
-    @Param('id') teamId: string,
-  ) {
-    if (!user.isScrum) throw new ForbiddenException();
-
-    await this.teamService.editBoard(teamId, boardDto);
-  }
-
-  @UseGuards(JwtGuard)
-  @Get(':id/board')
-  async getBoard(
-    @User() user: TokenUser,
-    @Param('id') teamId: string,
-  ): Promise<EditBoardDto> {
-    return await this.teamService.getBoard(user, teamId);
   }
 }

@@ -16,8 +16,6 @@ export class BoardColumnDto {
     @IsNotEmpty()
     name: string
     @IsString()
-    description?: string
-    @IsString()
     @IsNotEmpty()
     color: string
     @IsInt()

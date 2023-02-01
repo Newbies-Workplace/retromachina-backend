@@ -36,6 +36,7 @@ model Board {
   default_column_id String
 
   BoardColumns BoardColumn[]
+  Tasks Task[]
 
   Team Team @relation(fields: [team_id], references: [id], onDelete: Cascade)
 }
@@ -73,6 +74,7 @@ model Task {
   team_id     String
   column_id   String?
 
+  Board         Board?          @relation(fields: [team_id], references: [team_id], onDelete: Cascade, map: "Task_Board_team_id_fkey")
   User          User?          @relation(fields: [owner_id], references: [id])
   Team          Team?          @relation(fields: [team_id], references: [id], onDelete: Cascade)
   Column        BoardColumn?   @relation(fields: [column_id], references: [id])

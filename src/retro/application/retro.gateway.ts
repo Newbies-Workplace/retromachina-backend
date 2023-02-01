@@ -1,41 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { TokenUser } from 'src/types';
 import {
   AddActionPointPayload,
   CardAddToCardPayload,
-  ChangeActionPointOwnerPayload, ChangeCurrentDiscussCardPayload,
+  ChangeActionPointOwnerPayload,
+  ChangeCurrentDiscussCardPayload,
+  ChangeTimerPayload,
+  ChangeVoteAmountPayload,
   DeleteActionPointPayload,
+  DeleteCardPayload,
   MoveCardToColumnPayload,
   NewCardPayload,
+  ReadyPayload,
+  RemoveVoteOnCardPayload,
+  RoomStatePayload,
+  VoteOnCardPayload,
   WriteStatePayload,
-} from './interfaces/request.interface';
-import { RetroRoom } from './objects/retroRoom.object';
-import { Card, RetroColumn } from './interfaces/retroRoom.interface';
+} from './model/request.interface';
+import { PrismaService } from '../../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { RetroRoom } from '../domain/model/retroRoom.object';
+import { Card, RetroColumn } from './model/retroRoom.interface';
 import { v4 as uuid } from 'uuid';
-import { RoomState } from 'src/utils/validator/roomstate.validator';
-import { RoomStateValidator } from 'src/utils/validator/roomstate.validator';
-
-enum ErrorTypes {
-  RetrospectiveNotFound = 'RetrospectiveNotFound',
-  UserNotFound = 'UserNotFound',
-  Unauthorized = 'Unauthorized',
-  JwtError = 'JwtError',
-  InvalidRoomState = 'InvalidRoomState',
-}
-
-interface UserData {
-  user: User;
-  roomId: string;
-}
+import { RoomStateValidator } from './roomstate.validator';
+import { ErrorTypes } from './model/ErrorTypes';
+import { Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
 
 @Injectable()
-export class GatewayService {
-  public users = new Map<string, UserData>();
-  public retroRooms = new Map<string, RetroRoom>();
+@WebSocketGateway(3001, { cors: true, namespace: 'retro' })
+export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
+
+  private users = new Map<string, {roomId: string; user: User}>();
+  private retroRooms = new Map<string, RetroRoom>();
 
   constructor(
     private prismaService: PrismaService,
@@ -48,10 +53,11 @@ export class GatewayService {
     return retroRoom;
   }
 
-  // [HANDLERS]
-
-  async handleConnection(client: Socket, retroId: string, user: TokenUser) {
+  async handleConnection(client: Socket) {
+    const retroId = client.handshake.query.retro_id as string;
+    const user = this.getUserFromJWT(client);
     const room = this.retroRooms.get(retroId);
+
     if (!room) {
       this.doException(
         client,
@@ -72,11 +78,6 @@ export class GatewayService {
           }
         }
       }
-    });
-
-    this.users.set(client.id, {
-      user: userQuery,
-      roomId: room.id,
     });
 
     if (!userQuery) {
@@ -114,6 +115,11 @@ export class GatewayService {
       room.addUser(client.id, user.id);
     }
 
+    this.users.set(client.id, {
+      user: userQuery,
+      roomId: room.id,
+    });
+
     client.join(retroId);
     const roomData = room.getFrontData();
 
@@ -126,7 +132,8 @@ export class GatewayService {
     });
   }
 
-  handleReady(server: Server, client: Socket, readyState: boolean) {
+  @SubscribeMessage('command_ready')
+  async handleReady(client: Socket, {readyState}: ReadyPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
@@ -134,19 +141,20 @@ export class GatewayService {
     if (roomUser.isReady !== readyState) {
       roomUser.isReady = readyState;
       readyState ? room.usersReady++ : room.usersReady--;
-      this.emitRoomDataTo(roomId, server, room);
+      this.emitRoomSync(roomId, room);
     }
   }
 
-  handleNewCard(server: Server, client: Socket, newCard: NewCardPayload) {
-    if (newCard.text.trim().length === 0) return;
-    if (newCard.text.length > 1000) newCard.text = newCard.text.slice(0, 1000);
+  @SubscribeMessage('command_new_card')
+  async handleNewCard(client: Socket, payload: NewCardPayload) {
+    if (payload.text.trim().length === 0) return;
+    if (payload.text.length > 1000) payload.text = payload.text.slice(0, 1000);
 
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
 
-    const card = newCard as unknown as Card;
+    const card = payload as unknown as Card;
     card.id = uuid();
     card.authorId = roomUser.userId;
     card.parentCardId = null;
@@ -159,10 +167,11 @@ export class GatewayService {
     }
     room.cards.unshift(card);
 
-    this.emitRoomDataTo(roomId, server, room);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleDeleteCard(server: Server, client: Socket, cardId: string) {
+  @SubscribeMessage('command_delete_card')
+  handleDeleteCard(client: Socket, {cardId}: DeleteCardPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
@@ -174,65 +183,69 @@ export class GatewayService {
       room.cards = room.cards.filter(
         (card) => !(card.id === cardId && card.authorId === roomUser.userId),
       );
-      this.emitRoomDataTo(roomId, server, room);
+      this.emitRoomSync(roomId, room);
     }
   }
 
-  handleWriteState(server: Server, client: Socket, data: WriteStatePayload) {
+  @SubscribeMessage('command_write_state')
+  handleWriteState(client: Socket, payload: WriteStatePayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
 
     const column = room.retroColumns.find((column) => {
-      return column.id === data.columnId;
+      return column.id === payload.columnId;
     });
 
     if (column) {
-      if (data.writeState) {
-        roomUser.writingInColumns.push(data.columnId);
+      if (payload.writeState) {
+        roomUser.writingInColumns.push(payload.columnId);
         column.usersWriting++;
       } else {
         roomUser.writingInColumns = roomUser.writingInColumns.filter(
           (columnId) => {
-            return columnId !== data.columnId;
+            return columnId !== payload.columnId;
           },
         );
         column.usersWriting--;
       }
 
       roomUser.isWriting = roomUser.writingInColumns.length > 0;
-      this.emitRoomDataTo(roomId, server, room);
+      this.emitRoomSync(roomId, room);
     }
   }
 
-  handleRoomState(server: Server, client: Socket, roomState: RoomState) {
+  @SubscribeMessage('command_room_state')
+  handleRoomState(client: Socket, payload: RoomStatePayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    const isValid = RoomStateValidator.validate(roomState);
+    const isValid = RoomStateValidator.validate(payload.roomState);
     if (!isValid) {
       this.doException(
         client,
         ErrorTypes.InvalidRoomState,
-        `Invalid room state value (${roomState})`,
+        `Invalid room state value (${payload.roomState})`,
       );
       return;
     }
 
-    room.changeState(roomState);
+    room.changeState(payload.roomState);
 
-    this.emitRoomDataTo(roomId, server, room);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleChangeTimer(server: Server, client: Socket, timestamp: number) {
+  @SubscribeMessage('command_change_timer')
+  handleChangeTimer(client: Socket, payload: ChangeTimerPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.timerEnds = timestamp;
-    this.emitRoomDataTo(roomId, server, room);
+    room.timerEnds = payload.timestamp;
+    this.emitRoomSync(roomId, room);
   }
 
-  handleVoteOnCard(server: Server, client: Socket, parentCardId: string) {
+  @SubscribeMessage('command_vote_on_card')
+  handleVoteOnCard(client: Socket, payload: VoteOnCardPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
@@ -241,26 +254,28 @@ export class GatewayService {
       (vote) => vote.voterId === roomUser.userId,
     ).length;
     if (userVotes < room.maxVotes) {
-      const card = room.cards.find((card) => card.id === parentCardId);
+      const card = room.cards.find((card) => card.id === payload.parentCardId);
       if (!card) {
         return;
       }
 
-      room.addVote(roomUser.userId, parentCardId);
-      this.emitRoomDataTo(roomId, server, room);
+      room.addVote(roomUser.userId, payload.parentCardId);
+      this.emitRoomSync(roomId, room);
     }
   }
 
-  handleRemoveVoteOnCard(server: Server, client: Socket, parentCardId: string) {
+  @SubscribeMessage('command_remove_vote_on_card')
+  handleRemoveVoteOnCard(client: Socket, payload: RemoveVoteOnCardPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
 
-    room.removeVote(roomUser.userId, parentCardId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.removeVote(roomUser.userId, payload.parentCardId);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleChangeVoteAmount(server: Server, client: Socket, amount: number) {
+  @SubscribeMessage('command_change_vote_amount')
+  handleChangeVoteAmount(client: Socket, payload: ChangeVoteAmountPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
@@ -268,35 +283,30 @@ export class GatewayService {
       return;
     }
 
-    room.setVoteAmount(amount);
-    this.emitRoomDataTo(roomId, server, room);
+    room.setVoteAmount(payload.votesAmount);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleCardAddToCard(
-    server: Server,
-    client: Socket,
-    data: CardAddToCardPayload,
-  ) {
+  @SubscribeMessage('command_card_add_to_card')
+  handleCardAddToCard(client: Socket, payload: CardAddToCardPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.addCardToCard(data.parentCardId, data.cardId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.addCardToCard(payload.parentCardId, payload.cardId);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleMoveCardToColumn(
-    server: Server,
-    client: Socket,
-    data: MoveCardToColumnPayload,
-  ) {
+  @SubscribeMessage('command_move_card_to_column')
+  handleMoveCardToColumn(client: Socket, payload: MoveCardToColumnPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.moveCardToColumn(data.cardId, data.columnId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.moveCardToColumn(payload.cardId, payload.columnId);
+    this.emitRoomSync(roomId, room);
   }
 
-  async handleCloseRoom(server: Server, client: Socket) {
+  @SubscribeMessage('command_close_room')
+  async handleCloseRoom(client: Socket) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
@@ -328,65 +338,89 @@ export class GatewayService {
       this.retroRooms.delete(roomId);
     }
 
-    server.to(roomId).emit('event_close_room');
+    this.server.to(roomId).emit('event_close_room');
   }
 
-  handleAddActionPoint(
-    server: Server,
-    client: Socket,
-    data: AddActionPointPayload,
-  ) {
-    if (data.text.trim().length === 0) {
+  @SubscribeMessage('command_add_action_point')
+  handleAddActionPoint(client: Socket, payload: AddActionPointPayload) {
+    if (payload.text.trim().length === 0) {
       return;
     }
 
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.addActionPoint(data.text, data.ownerId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.addActionPoint(payload.text, payload.ownerId);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleDeleteActionPoint(
-    server: Server,
-    client: Socket,
-    data: DeleteActionPointPayload,
-  ) {
+  @SubscribeMessage('command_delete_action_point')
+  handleDeleteActionPoint(client: Socket, payload: DeleteActionPointPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.deleteActionPoint(data.actionPointId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.deleteActionPoint(payload.actionPointId);
+    this.emitRoomSync(roomId, room);
   }
 
-  handleChangeDiscussionCard(
-    server: Server,
-    client: Socket,
-    data: ChangeCurrentDiscussCardPayload,
-  ) {
-    const roomId = this.users.get(client.id).roomId;
-    const room = this.retroRooms.get(roomId);
-
-    room.changeDiscussionCard(data.cardId);
-    this.emitRoomDataTo(roomId, server, room);
-  }
-
+  @SubscribeMessage('command_change_action_point_owner')
   handleChangeActionPointOwner(
-    server: Server,
     client: Socket,
-    data: ChangeActionPointOwnerPayload,
+    payload: ChangeActionPointOwnerPayload,
   ) {
-    //TODO: Change action point handler
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.changeActionPointOwner(data.actionPointId, data.ownerId);
-    this.emitRoomDataTo(roomId, server, room);
+    room.changeActionPointOwner(payload.actionPointId, payload.ownerId);
+    this.emitRoomSync(roomId, room);
   }
 
-  // [UTILS]
+  @SubscribeMessage('command_change_discussion_card')
+  handleChangeDiscussionCard(
+    client: Socket,
+    payload: ChangeCurrentDiscussCardPayload,
+  ) {
+    const roomId = this.users.get(client.id).roomId;
+    const room = this.retroRooms.get(roomId);
 
-  getUserFromJWT(client: Socket) {
+    room.changeDiscussionCard(payload.cardId);
+    this.emitRoomSync(roomId, room);
+  }
+
+  async handleDisconnect(client: Socket) {
+    try {
+      const user = this.users.get(client.id);
+      const roomId = user.roomId;
+      const room = this.retroRooms.get(user.roomId);
+
+      this.users.delete(client.id);
+      room.removeUser(client.id, user.user.id);
+
+      this.server.to(roomId).emit('event_room_sync', {
+        roomData: room.getFrontData(),
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  private emitRoomSync(roomId: string, room: RetroRoom) {
+    this.server.to(roomId).emit('event_room_sync', {
+      roomData: room.getFrontData(),
+    });
+  }
+
+  private doException(client: Socket, type: ErrorTypes, message: string) {
+    this.users.delete(client.id);
+
+    client.emit('error', {
+      type,
+      message,
+    });
+    client.disconnect();
+  }
+
+  private getUserFromJWT(client: Socket) {
     try {
       const result = this.jwtService.verify(
         client.handshake.headers.authorization,
@@ -397,39 +431,6 @@ export class GatewayService {
       if (error.name == 'JsonWebTokenError') {
         this.doException(client, ErrorTypes.JwtError, 'JWT must be provided!');
       }
-    }
-  }
-
-  doException(client: Socket, type: ErrorTypes, message: string) {
-    this.users.delete(client.id);
-
-    client.emit('error', {
-      type,
-      message,
-    });
-    client.disconnect();
-  }
-
-  emitRoomDataTo(roomId: string, server: Server, room: RetroRoom) {
-    server.to(roomId).emit('event_room_sync', {
-      roomData: room.getFrontData(),
-    });
-  }
-
-  handleUserDisconnect(server: Server, client: Socket) {
-    try {
-      const user = this.users.get(client.id);
-      const roomId = user.roomId;
-      const room = this.retroRooms.get(user.roomId);
-
-      this.users.delete(client.id);
-      room.removeUser(client.id, user.user.id);
-
-      server.to(roomId).emit('event_room_sync', {
-        roomData: room.getFrontData(),
-      });
-    } catch (e) {
-      console.log(e);
     }
   }
 }

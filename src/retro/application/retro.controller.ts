@@ -8,20 +8,20 @@ import {
   UseGuards,
   Param,
 } from '@nestjs/common';
-import { JwtGuard } from 'src/auth/guard/jwt.guard';
-import { GatewayService } from 'src/gateway/gateway.service';
-import { RetroService } from './retro.service';
+import { JwtGuard } from 'src/auth/jwt/jwt.guard';
+import { RetroService } from '../domain/retro.service';
 import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/gateway/interfaces/retroRoom.interface';
-import { User } from 'src/utils/decorators/user.decorator';
-import { TokenUser } from 'src/types';
+import { RetroColumn } from 'src/retro/application/model/retroRoom.interface';
+import { User } from 'src/auth/jwt/jwtuser.decorator';
+import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RetroGateway } from './retro.gateway';
 
 @Controller('retros')
 export class RetroController {
   constructor(
     private retroService: RetroService,
-    private gatewayService: GatewayService,
+    private retroGateway: RetroGateway,
     private prismaService: PrismaService,
   ) {}
 
@@ -43,7 +43,7 @@ export class RetroController {
 
   @Post()
   @UseGuards(JwtGuard)
-  async createRetro(@User() user: TokenUser, @Body() body) {
+  async createRetro(@User() user: JWTUser, @Body() body) {
     // TODO: Jedno retro na jeden team, validacja teamu
 
     const retroId = uuid();
@@ -56,7 +56,7 @@ export class RetroController {
       },
     });
 
-    const room = await this.gatewayService.addRetroRoom(
+    const room = await this.retroGateway.addRetroRoom(
       retroId,
       body.teamId,
       body.columns.map((column: RetroColumn) => {
