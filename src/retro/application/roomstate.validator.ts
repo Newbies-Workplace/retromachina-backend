@@ -1,7 +1,7 @@
 export type RoomState = 'reflection' | 'group' | 'vote' | 'discuss' | 'summary';
 
 export class RoomStateValidator {
-  static validate(value: any) {
+  static validate(value: RoomState) {
     const possibleValues = [
       'reflection',
       'group',

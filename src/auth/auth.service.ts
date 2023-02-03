@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { config } from 'dotenv';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { GoogleUser } from 'src/types';
+import { GoogleUser } from './google/GoogleUser';
 
 config();
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -35,7 +36,7 @@ export class AuthService {
         },
       });
 
-      invites.forEach(async (invite) => {
+      for (const invite of invites) {
         await this.prismaService.teamUsers.create({
           data: {
             team_id: invite.team_id,
@@ -48,7 +49,7 @@ export class AuthService {
             id: invite.id,
           },
         });
-      });
+      }
     }
 
     return this.jwtService.sign(
