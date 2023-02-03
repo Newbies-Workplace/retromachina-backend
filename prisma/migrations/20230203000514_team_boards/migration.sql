@@ -37,7 +37,7 @@ INSERT INTO BoardColumn (id, team_id, `order`, name, color)
 
 UPDATE Board
     JOIN BoardColumn BC on Board.team_id = BC.team_id
-    SET Board.default_column_id = BC.id
+    SET Board.default_column_id = BC.id;
 
 -- AddForeignKey
 ALTER TABLE `Board` ADD CONSTRAINT `Board_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
