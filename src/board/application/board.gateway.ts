@@ -11,8 +11,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ErrorTypes } from '../../retro/application/model/ErrorTypes';
 import { User } from '@prisma/client';
-import { TaskUpdatedEvent } from './board/board.events';
-import { TaskUpdateCommand } from './board/board.commands';
+import { TaskUpdatedEvent } from './model/board.events';
+import { TaskUpdateCommand } from './model/board.commands';
 
 @Injectable()
 @WebSocketGateway(3001, { cors: true, namespace: 'board' })

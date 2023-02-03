@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BoardColumnDto, EditBoardDto } from './application/board/editBoard.dto';
+import { BoardColumnDto, EditBoardDto } from './application/model/editBoard.dto';
 import { BoardColumn } from '@prisma/client';
 
 @Injectable()

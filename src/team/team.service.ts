@@ -1,11 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MethodNotAllowedException } from '@nestjs/common/exceptions';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { CreateTeamRequest } from './dto/createTeam.request';
 import { EditTeamRequest } from './dto/editTeam.request';
-import { BoardColumnDto, EditBoardDto } from '../board/application/board/editBoard.dto';
-import { BoardColumn, Team } from '@prisma/client';
+import { Team } from '@prisma/client';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()

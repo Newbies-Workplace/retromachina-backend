@@ -1,27 +1,15 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  UseGuards,
-  Param,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/jwt/jwt.guard';
 import { RetroService } from '../domain/retro.service';
-import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/retro/application/model/retroRoom.interface';
 import { User } from 'src/auth/jwt/jwtuser.decorator';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RetroGateway } from './retro.gateway';
+import { RetroCreateRequest } from './model/request.interface';
 
 @Controller('retros')
 export class RetroController {
   constructor(
     private retroService: RetroService,
-    private retroGateway: RetroGateway,
     private prismaService: PrismaService,
   ) {}
 
@@ -43,11 +31,11 @@ export class RetroController {
 
   @Post()
   @UseGuards(JwtGuard)
-  async createRetro(@User() user: TokenUser, @Body() body) {
+  async createRetro(@User() user: JWTUser, @Body() body: RetroCreateRequest) {
     const runningRetro = await this.prismaService.retrospective.findFirst({
       where: {
         is_running: true,
-        team_id: body.teamID,
+        team_id: body.teamId,
       },
     });
 

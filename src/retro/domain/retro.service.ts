@@ -1,16 +1,15 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Body, Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/gateway/interfaces/retroRoom.interface';
-import { GatewayService } from 'src/gateway/gateway.service';
+import { RetroGateway } from '../application/retro.gateway';
+import { RetroCreateRequest } from '../application/model/request.interface';
 
 @Injectable()
 export class RetroService implements OnModuleInit {
 
   constructor(
     private prismaService: PrismaService,
-    private gatewayService: GatewayService,
+    private retroGateway: RetroGateway,
   ) {}
 
   async onModuleInit() {
@@ -40,26 +39,31 @@ export class RetroService implements OnModuleInit {
     });
   }
 
-  async createRetro(userId: string, @Body() body) {
-    const retroId = uuid();
-
+  async createRetro(userId: string, request: RetroCreateRequest) {
     const retroId = uuid();
     await this.prismaService.retrospective.create({
       data: {
         id: retroId,
         date: new Date(),
         is_running: true,
-        team_id: body.teamId,
+        team_id: request.teamId,
       },
     });
 
     const room = await this.retroGateway.addRetroRoom(
       retroId,
-      body.teamId,
-      body.columns.map((column: RetroColumn) => {
-        column.id = uuid();
-        column.usersWriting = 0;
-        return column;
+      request.teamId,
+      request.columns.map((column) => {
+        return {
+          id: uuid(),
+          color: column.color,
+          name: column.name,
+          description: column.desc,
+          cards: [],
+          isWriting: false,
+          usersWriting: 0,
+          teamCardsAmount: 0
+        };
       }),
     );
     room.setScrum(userId);
