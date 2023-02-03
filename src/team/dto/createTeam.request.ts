@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
 
-export class CreateTeamDto {
+export class CreateTeamRequest {
   @IsNotEmpty()
   @IsString()
   name: string;

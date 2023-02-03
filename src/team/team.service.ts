@@ -2,10 +2,10 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { MethodNotAllowedException } from '@nestjs/common/exceptions';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
-import { CreateTeamDto } from './dto/createTeam.dto';
-import { EditTeamDto } from './dto/editTeam.dto';
+import { CreateTeamRequest } from './dto/createTeam.request';
+import { EditTeamRequest } from './dto/editTeam.request';
 import { BoardColumnDto, EditBoardDto } from '../board/application/board/editBoard.dto';
-import { BoardColumn } from '@prisma/client';
+import { BoardColumn, Team } from '@prisma/client';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -13,21 +13,18 @@ export class TeamService {
   constructor(private prismaService: PrismaService) {}
 
   async getTeam(teamID: string) {
-    const teamInfo = await this.prismaService.team.findFirst({
+    const team = await this.prismaService.team.findFirst({
       where: {
         id: teamID,
       },
     });
 
-    if (!teamInfo) throw new NotFoundException();
+    if (!team) throw new NotFoundException();
 
-    return {
-      id: teamInfo.id,
-      name: teamInfo.name,
-    };
+    return team
   }
 
-  async createTeam(user: JWTUser, createTeamDto: CreateTeamDto) {
+  async createTeam(user: JWTUser, createTeamDto: CreateTeamRequest): Promise<Team> {
     const team = await this.prismaService.team.create({
       data: {
         name: createTeamDto.name,
@@ -60,18 +57,20 @@ export class TeamService {
     })
 
     await this.addUsersToTeamUsers(createTeamDto.emails, team.id, user.id);
+
+    return team
   }
 
-  async editTeam(user: JWTUser, teamId: string, editTeamDto: EditTeamDto) {
-    const checkTeam = await this.prismaService.team.findFirst({
+  async editTeam(user: JWTUser, teamId: string, editTeamDto: EditTeamRequest): Promise<Team> {
+    const team = await this.prismaService.team.findFirst({
       where: {
         id: teamId,
       },
     });
 
-    if (!checkTeam) throw new NotFoundException();
+    if (!team) throw new NotFoundException();
 
-    if (checkTeam.scrum_master_id !== user.id)
+    if (team.scrum_master_id !== user.id)
       throw new MethodNotAllowedException();
 
     await this.prismaService.team.update({
@@ -86,7 +85,7 @@ export class TeamService {
     // Reset users && leave scrum untouched
     await this.prismaService.teamUsers.deleteMany({
       where: {
-        team_id: checkTeam.id,
+        team_id: team.id,
         NOT: {
           user_id: user.id,
         },
@@ -95,12 +94,14 @@ export class TeamService {
 
     await this.prismaService.invite.deleteMany({
       where: {
-        team_id: checkTeam.id,
+        team_id: team.id,
       },
     });
 
     // Add users to teamUsers
-    await this.addUsersToTeamUsers(editTeamDto.emails, checkTeam.id, user.id);
+    await this.addUsersToTeamUsers(editTeamDto.emails, team.id, user.id);
+
+    return team
   }
 
   async addUsersToTeamUsers(emails: string[], teamId: string, scrumId: string) {

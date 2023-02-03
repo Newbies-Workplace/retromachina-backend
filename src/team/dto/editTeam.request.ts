@@ -1,6 +1,6 @@
 import { IsArray, IsString } from 'class-validator';
 
-export class EditTeamDto {
+export class EditTeamRequest {
   @IsString()
   name: string;
 
