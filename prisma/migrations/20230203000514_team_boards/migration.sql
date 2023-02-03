@@ -27,6 +27,18 @@ CREATE TABLE `BoardColumn` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+INSERT INTO Board (team_id, default_column_id)
+    SELECT Team.id, 'a'
+    FROM Team;
+
+INSERT INTO BoardColumn (id, team_id, `order`, name, color)
+    SELECT UUID(), Team.id, 0, 'Backlog', '#4848db'
+    FROM Team;
+
+UPDATE Board
+    JOIN BoardColumn BC on Board.team_id = BC.team_id
+    SET Board.default_column_id = BC.id
+
 -- AddForeignKey
 ALTER TABLE `Board` ADD CONSTRAINT `Board_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
