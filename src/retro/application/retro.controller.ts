@@ -1,27 +1,15 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  UseGuards,
-  Param,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/jwt/jwt.guard';
 import { RetroService } from '../domain/retro.service';
-import { v4 as uuid } from 'uuid';
-import { RetroColumn } from 'src/retro/application/model/retroRoom.interface';
 import { User } from 'src/auth/jwt/jwtuser.decorator';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RetroGateway } from './retro.gateway';
+import { RetroCreateRequest } from './model/request.interface';
 
 @Controller('retros')
 export class RetroController {
   constructor(
     private retroService: RetroService,
-    private retroGateway: RetroGateway,
     private prismaService: PrismaService,
   ) {}
 
@@ -43,32 +31,20 @@ export class RetroController {
 
   @Post()
   @UseGuards(JwtGuard)
-  async createRetro(@User() user: JWTUser, @Body() body) {
-    // TODO: Jedno retro na jeden team, validacja teamu
-
-    const retroId = uuid();
-    await this.prismaService.retrospective.create({
-      data: {
-        id: retroId,
-        date: new Date(),
+  async createRetro(@User() user: JWTUser, @Body() body: RetroCreateRequest) {
+    const runningRetro = await this.prismaService.retrospective.findFirst({
+      where: {
         is_running: true,
         team_id: body.teamId,
       },
     });
 
-    const room = await this.retroGateway.addRetroRoom(
-      retroId,
-      body.teamId,
-      body.columns.map((column: RetroColumn) => {
-        column.id = uuid();
-        column.usersWriting = 0;
-        return column;
-      }),
-    );
-    room.setScrum(user.id);
+    if (runningRetro) {
+      throw new BadRequestException(
+        'One retro for this team is already running.',
+      );
+    }
 
-    return {
-      retro_id: retroId,
-    };
+    return await this.retroService.createRetro(user.id, body);
   }
 }

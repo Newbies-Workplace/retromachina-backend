@@ -2,9 +2,9 @@ import { Body, Controller, ForbiddenException, Get, Param, Put, UseGuards } from
 import { JwtGuard } from '../../auth/jwt/jwt.guard';
 import { User } from '../../auth/jwt/jwtuser.decorator';
 import { JWTUser } from '../../auth/jwt/JWTUser';
-import { EditBoardDto } from './board/editBoard.dto';
+import { EditBoardDto } from './model/editBoard.dto';
 import { BoardService } from '../board.service';
-import { BoardResponse } from './board/board.response';
+import { BoardResponse } from './model/board.response';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('teams')
