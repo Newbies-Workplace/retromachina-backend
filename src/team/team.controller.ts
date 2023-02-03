@@ -14,9 +14,11 @@ import {
 import { JwtGuard } from 'src/auth/jwt/jwt.guard';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { User } from 'src/auth/jwt/jwtuser.decorator';
-import { CreateTeamDto } from './dto/createTeam.dto';
-import { EditTeamDto } from './dto/editTeam.dto';
+import { CreateTeamRequest } from './dto/createTeam.request';
+import { EditTeamRequest } from './dto/editTeam.request';
 import { TeamService } from './team.service';
+import { TeamResponse } from './dto/team.response';
+import { toTeamResponse } from './team.converter';
 
 @Controller('teams')
 export class TeamController {
@@ -24,22 +26,29 @@ export class TeamController {
 
   @Get(':id')
   @UseGuards(JwtGuard)
-  async getTeam(@Param('id') teamId: string) {
-    if (teamId.trim().length === 0)
-      throw new BadRequestException('No query param');
+  async getTeam(@Param('id') teamId: string): Promise<TeamResponse> {
+    if (teamId.trim().length === 0) {
+      throw new BadRequestException('No query param')
+    }
 
-    return await this.teamService.getTeam(teamId);
+    const team = await this.teamService.getTeam(teamId)
+
+    return toTeamResponse(team)
   }
 
   @UseGuards(JwtGuard)
   @Post()
   async createTeam(
     @User() user: JWTUser,
-    @Body() createTeamDto: CreateTeamDto,
-  ) {
-    if (!user.isScrum) throw new ForbiddenException();
+    @Body() createTeamDto: CreateTeamRequest,
+  ): Promise<TeamResponse> {
+    if (!user.isScrum) {
+      throw new ForbiddenException()
+    }
 
-    await this.teamService.createTeam(user, createTeamDto);
+    const team = await this.teamService.createTeam(user, createTeamDto)
+
+    return toTeamResponse(team)
   }
 
   @UseGuards(JwtGuard)
@@ -47,12 +56,16 @@ export class TeamController {
   @HttpCode(204)
   async editTeam(
     @User() user: JWTUser,
-    @Body() editTeamDto: EditTeamDto,
+    @Body() editTeamDto: EditTeamRequest,
     @Param('id') teamId: string,
-  ) {
-    if (!user.isScrum) throw new ForbiddenException();
+  ): Promise<TeamResponse> {
+    if (!user.isScrum) {
+      throw new ForbiddenException()
+    }
 
-    await this.teamService.editTeam(user, teamId, editTeamDto);
+    const team = await this.teamService.editTeam(user, teamId, editTeamDto)
+
+    return toTeamResponse(team)
   }
 
   @UseGuards(JwtGuard)
