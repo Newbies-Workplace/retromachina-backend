@@ -39,6 +39,10 @@ UPDATE Board
     JOIN BoardColumn BC on Board.team_id = BC.team_id
     SET Board.default_column_id = BC.id;
 
+UPDATE Task
+    JOIN BoardColumn BC on Task.team_id = BC.team_id
+    SET Task.column_id = BC.id;
+
 -- AddForeignKey
 ALTER TABLE `Board` ADD CONSTRAINT `Board_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
