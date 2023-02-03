@@ -2,13 +2,13 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { HttpException, NotFoundException } from '@nestjs/common/exceptions';
 import { Team, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TokenUser } from 'src/types';
+import { JWTUser } from 'src/auth/jwt/JWTUser';
 
 @Injectable()
 export class UserService {
   constructor(private prismaService: PrismaService) {}
 
-  async getUserMe(user: TokenUser) {
+  async getUserMe(user: JWTUser) {
     const userInfo = await this.prismaService.user.findUnique({
       where: {
         google_id: user.google_id,

@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ActionPoint } from 'src/gateway/interfaces/retroRoom.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Task } from '@prisma/client';
 
 @Injectable()
 export class TaskService {
   constructor(private prismaService: PrismaService) {}
 
-  async getRetroTasks(retroID: string) {
+  async getRetroTasks(retroID: string): Promise<Task[]> {
     const retroCheck = await this.prismaService.retrospective.findFirst({
       where: {
         id: retroID,
@@ -15,36 +15,28 @@ export class TaskService {
 
     if (!retroCheck) throw new NotFoundException('Retrospective not found!');
 
-    const tasks = await this.prismaService.task.findMany({
+    return this.prismaService.task.findMany({
       where: {
         retro_id: retroID,
       },
     });
-
-    return tasks.map((task) => {
-      return {
-        id: task.id,
-        ownerId: task.owner_id,
-        text: task.description,
-      };
-    });
   }
 
-  async getTeamTasks(teamID: string) {
+  async getTeamTasks(teamID: string): Promise<Task[]> {
     const teamCheck = await this.prismaService.team.findFirst({
       where: {
         id: teamID,
       },
     });
 
-    if (!teamCheck) throw new NotFoundException('Team not found!');
+    if (!teamCheck) {
+      throw new NotFoundException('Team not found!');
+    }
 
-    const tasks = await this.prismaService.task.findMany({
+    return this.prismaService.task.findMany({
       where: {
         team_id: teamID,
       },
     });
-
-    return tasks;
   }
 }

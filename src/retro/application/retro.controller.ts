@@ -8,20 +8,22 @@ import {
   UseGuards,
   Param,
 } from '@nestjs/common';
-import { JwtGuard } from 'src/auth/guard/jwt.guard';
-import { RetroService } from './retro.service';
-import { User } from 'src/utils/decorators/user.decorator';
-import { TokenUser } from 'src/types';
+import { JwtGuard } from 'src/auth/jwt/jwt.guard';
+import { RetroService } from '../domain/retro.service';
+import { v4 as uuid } from 'uuid';
+import { RetroColumn } from 'src/retro/application/model/retroRoom.interface';
+import { User } from 'src/auth/jwt/jwtuser.decorator';
+import { JWTUser } from 'src/auth/jwt/JWTUser';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RetroGateway } from './retro.gateway';
 
 @Controller('retros')
 export class RetroController {
   constructor(
     private retroService: RetroService,
+    private retroGateway: RetroGateway,
     private prismaService: PrismaService,
-  ) {
-    //this.gatewayService.addRetroRoom("0251185b-8d7b-4b44-8891-d7d0274e7cb6", "uhuhu", Array<RetroColumn>());
-  }
+  ) {}
 
   @Get()
   @UseGuards(JwtGuard)
