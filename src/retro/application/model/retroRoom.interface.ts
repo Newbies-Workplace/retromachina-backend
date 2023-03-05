@@ -9,11 +9,7 @@ export interface Card {
 export interface User {
   userId: string;
   isReady: boolean;
-  isWriting: boolean;
-  writingInColumns: string[];
-}
-export interface ScrumMaster {
-  userId: string;
+  writingInColumns: Set<string>;
 }
 
 export interface RetroColumn {
@@ -23,7 +19,6 @@ export interface RetroColumn {
   description: string;
   cards: Card[];
   teamCardsAmount: number;
-  usersWriting: number;
   isWriting: boolean;
 }
 
