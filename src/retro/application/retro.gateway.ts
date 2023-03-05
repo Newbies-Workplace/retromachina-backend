@@ -47,8 +47,13 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private jwtService: JwtService,
   ) {}
 
-  async addRetroRoom(retroId: string, teamId: string, columns: RetroColumn[]) {
-    const retroRoom = new RetroRoom(retroId, teamId, columns);
+  async addRetroRoom(
+    retroId: string,
+    teamId: string,
+    scrumMasterId: string,
+    columns: RetroColumn[],
+  ) {
+    const retroRoom = new RetroRoom(retroId, teamId, scrumMasterId, columns);
     this.retroRooms.set(retroId, retroRoom);
     return retroRoom;
   }
@@ -89,31 +94,19 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    if (userQuery.user_type == 'SCRUM_MASTER') {
-      // Sprawdzanie userId scrum mastera teamu ? rozłączenie
-      if (room.scrumData.userId === user.id) {
-        room.setScrum(user.id);
-        room.addUser(client.id, user.id);
-      } else {
-        this.doException(
-          client,
-          ErrorTypes.Unauthorized,
-          `User (${user.id}) is not authorized to be a SCRUM_MASTER of this team`,
-        );
-        return;
-      }
-    } else {
-      if (userQuery.TeamUsers.length === 0) {
-        this.doException(
-          client,
-          ErrorTypes.Unauthorized,
-          `User (${user.id}) is not in team (${room.teamId})`,
-        );
-        return;
-      }
-
-      room.addUser(client.id, user.id);
+    if (
+      userQuery.TeamUsers.length === 0 ||
+      (userQuery.user_type === 'SCRUM_MASTER' && room.scrumMasterId !== user.id)
+    ) {
+      this.doException(
+        client,
+        ErrorTypes.Unauthorized,
+        `User (${user.id}) is not in team (${room.teamId})`,
+      );
+      return;
     }
+
+    room.addUser(client.id, user.id);
 
     this.users.set(client.id, {
       user: userQuery,
@@ -121,15 +114,9 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     client.join(retroId);
+
     const roomData = room.getFrontData();
-
-    client.emit('event_on_join', {
-      roomData,
-    });
-
-    client.broadcast.to(retroId).emit('event_room_sync', {
-      roomData,
-    });
+    this.server.to(room.id).emit('event_room_sync', {roomData});
   }
 
   @SubscribeMessage('command_ready')
@@ -140,7 +127,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (roomUser.isReady !== readyState) {
       roomUser.isReady = readyState;
-      readyState ? room.usersReady++ : room.usersReady--;
+
       this.emitRoomSync(roomId, room);
     }
   }
@@ -179,12 +166,15 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const cardIndex = room.cards.findIndex(
       (card) => card.id === cardId && card.authorId === roomUser.userId,
     );
-    if (cardIndex !== -1) {
-      room.cards = room.cards.filter(
-        (card) => !(card.id === cardId && card.authorId === roomUser.userId),
-      );
-      this.emitRoomSync(roomId, room);
+
+    if (cardIndex === -1) {
+      return
     }
+
+    room.cards = room.cards.filter(
+      (card) => !(card.id === cardId && card.authorId === roomUser.userId),
+    );
+    this.emitRoomSync(roomId, room);
   }
 
   @SubscribeMessage('command_write_state')
@@ -197,22 +187,17 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return column.id === payload.columnId;
     });
 
-    if (column) {
-      if (payload.writeState) {
-        roomUser.writingInColumns.push(payload.columnId);
-        column.usersWriting++;
-      } else {
-        roomUser.writingInColumns = roomUser.writingInColumns.filter(
-          (columnId) => {
-            return columnId !== payload.columnId;
-          },
-        );
-        column.usersWriting--;
-      }
-
-      roomUser.isWriting = roomUser.writingInColumns.length > 0;
-      this.emitRoomSync(roomId, room);
+    if (!column) {
+      return
     }
+
+    if (payload.writeState) {
+      roomUser.writingInColumns.add(column.id)
+    } else {
+      roomUser.writingInColumns.delete(column.id)
+    }
+
+    this.emitRoomSync(roomId, room);
   }
 
   @SubscribeMessage('command_room_state')
@@ -253,15 +238,18 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userVotes = room.votes.filter(
       (vote) => vote.voterId === roomUser.userId,
     ).length;
-    if (userVotes < room.maxVotes) {
-      const card = room.cards.find((card) => card.id === payload.parentCardId);
-      if (!card) {
-        return;
-      }
 
-      room.addVote(roomUser.userId, payload.parentCardId);
-      this.emitRoomSync(roomId, room);
+    if (userVotes >= room.maxVotes) {
+      return;
     }
+
+    const card = room.cards.find((card) => card.id === payload.parentCardId);
+    if (!card) {
+      return;
+    }
+
+    room.addVote(roomUser.userId, payload.parentCardId);
+    this.emitRoomSync(roomId, room);
   }
 
   @SubscribeMessage('command_remove_vote_on_card')
@@ -279,7 +267,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
-    if (room.scrumData.userId !== roomUser.userId) {
+    if (room.scrumMasterId !== roomUser.userId) {
       return;
     }
 
@@ -311,33 +299,34 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = this.retroRooms.get(roomId);
     const roomUser = room.users.get(client.id);
 
-    if (roomUser.userId === room.scrumData.userId) {
-      const board = await this.prismaService.board.findUnique({
-        where: {
-          team_id: room.teamId
-        }
-      })
-
-      await this.prismaService.task.createMany({
-        data: room.actionPoints.map((actionPoint) => {
-          return {
-            description: actionPoint.text,
-            owner_id: actionPoint.ownerId,
-            retro_id: room.id,
-            team_id: room.teamId,
-            column_id: board.default_column_id,
-          };
-        }),
-      });
-
-      await this.prismaService.retrospective.update({
-        where: { id: room.id },
-        data: { is_running: false },
-      });
-
-      this.retroRooms.delete(roomId);
+    if (roomUser.userId !== room.scrumMasterId) {
+      return
     }
 
+    const board = await this.prismaService.board.findUnique({
+      where: {
+        team_id: room.teamId
+      }
+    })
+
+    await this.prismaService.task.createMany({
+      data: room.actionPoints.map((actionPoint) => {
+        return {
+          description: actionPoint.text,
+          owner_id: actionPoint.ownerId,
+          retro_id: room.id,
+          team_id: room.teamId,
+          column_id: board.default_column_id,
+        };
+      }),
+    });
+
+    await this.prismaService.retrospective.update({
+      where: { id: room.id },
+      data: { is_running: false },
+    });
+
+    this.retroRooms.delete(roomId);
     this.server.to(roomId).emit('event_close_room');
   }
 
@@ -388,20 +377,20 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleDisconnect(client: Socket) {
-    try {
-      const user = this.users.get(client.id);
-      const roomId = user.roomId;
-      const room = this.retroRooms.get(user.roomId);
+    const user = this.users.get(client.id);
+    const roomId = user.roomId;
+    const room = this.retroRooms.get(user.roomId);
 
-      this.users.delete(client.id);
-      room.removeUser(client.id, user.user.id);
+    this.users.delete(client.id);
 
-      this.server.to(roomId).emit('event_room_sync', {
-        roomData: room.getFrontData(),
-      });
-    } catch (e) {
-      console.log(e);
+    if (!room) {
+      return
     }
+    room.removeUser(client.id, user.user.id);
+
+    this.server.to(roomId).emit('event_room_sync', {
+      roomData: room.getFrontData(),
+    });
   }
 
   private emitRoomSync(roomId: string, room: RetroRoom) {

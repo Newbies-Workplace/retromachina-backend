@@ -50,9 +50,10 @@ export class RetroService implements OnModuleInit {
       },
     });
 
-    const room = await this.retroGateway.addRetroRoom(
+    await this.retroGateway.addRetroRoom(
       retroId,
       request.teamId,
+      userId,
       request.columns.map((column) => {
         return {
           id: uuid(),
@@ -61,12 +62,10 @@ export class RetroService implements OnModuleInit {
           description: column.desc,
           cards: [],
           isWriting: false,
-          usersWriting: 0,
           teamCardsAmount: 0
         };
       }),
     );
-    room.setScrum(userId);
 
     return {
       retro_id: retroId,

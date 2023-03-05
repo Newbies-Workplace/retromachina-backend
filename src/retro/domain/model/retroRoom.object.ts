@@ -1,24 +1,13 @@
 import { RoomState } from 'src/retro/application/roomstate.validator';
 import { RoomDataResponse } from '../../application/model/response.interface';
-import {
-  ScrumMaster,
-  User,
-  Card,
-  RetroColumn,
-  Vote,
-  ActionPoint,
-} from '../../application/model/retroRoom.interface';
+import { ActionPoint, Card, RetroColumn, User, Vote } from '../../application/model/retroRoom.interface';
 import { v4 as uuid } from 'uuid';
 
 export class RetroRoom {
-  scrumData: ScrumMaster;
-  usersWriting = 0;
-  usersReady = 0;
-
   users: Map<string, User> = new Map();
 
-  createdDate: Date;
-  roomState: RoomState;
+  createdDate: Date = new Date();
+  roomState: RoomState = 'reflection';
   maxVotes?: number = 3;
   timerEnds?: number = null;
   discussionCardId = null;
@@ -30,10 +19,9 @@ export class RetroRoom {
   constructor(
     public id: string,
     public teamId: string,
+    public scrumMasterId: string,
     public retroColumns: RetroColumn[],
   ) {
-    this.createdDate = new Date();
-    this.roomState = 'reflection';
   }
 
   getFrontData() {
@@ -44,7 +32,7 @@ export class RetroRoom {
       teamId: this.teamId,
       createdDate: this.createdDate,
       maxVotes: this.maxVotes,
-      usersReady: this.usersReady,
+      usersReady: tempUsers.filter(user => user.isReady).length,
       roomState: this.roomState,
       timerEnds: this.timerEnds,
       cards: this.cards,
@@ -55,7 +43,9 @@ export class RetroRoom {
         column.cards = this.cards.filter((card) => {
           return card.columnId == column.id;
         });
-        column.isWriting = column.usersWriting > 0;
+        column.isWriting = tempUsers.filter(
+          user => Array.from(user.writingInColumns.values()).includes(column.id)
+        ).length > 0
         column.teamCardsAmount = column.cards.length;
         return column;
       }),
@@ -63,7 +53,6 @@ export class RetroRoom {
         return {
           id: user.userId,
           isReady: user.isReady,
-          isWriting: user.isWriting,
         };
       }),
     };
@@ -99,12 +88,6 @@ export class RetroRoom {
     this.votes = filteredVotes;
   }
 
-  setScrum(userId: string) {
-    this.scrumData = {
-      userId,
-    };
-  }
-
   addUser(socketId: string, userId: string) {
     const result = Array.from(this.users.entries()).find(([key, localUser]) => {
       return localUser.userId == userId;
@@ -114,8 +97,7 @@ export class RetroRoom {
       this.users.set(socketId, {
         userId,
         isReady: false,
-        isWriting: false,
-        writingInColumns: [],
+        writingInColumns: new Set<string>(),
       });
     } else {
       this.users.delete(result[0]);
@@ -237,7 +219,6 @@ export class RetroRoom {
   }
 
   private clearUsersReady() {
-    this.usersReady = 0;
     for (const [key, user] of this.users) {
       user.isReady = false;
     }

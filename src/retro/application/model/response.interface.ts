@@ -9,7 +9,6 @@ import {
 interface UserDataResponse {
   id: string;
   isReady: boolean;
-  isWriting: boolean;
 }
 
 export interface RoomDataResponse {
