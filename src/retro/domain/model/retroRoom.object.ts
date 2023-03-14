@@ -55,6 +55,7 @@ export class RetroRoom {
           isReady: user.isReady,
         };
       }),
+      serverTime: new Date().valueOf(),
     };
 
     return roomData;
