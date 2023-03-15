@@ -220,13 +220,16 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitRoomSync(roomId, room);
   }
 
-  @SubscribeMessage('command_change_timer')
+  @SubscribeMessage('command_timer_change')
   handleChangeTimer(client: Socket, payload: ChangeTimerPayload) {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
     room.timerEnds = payload.timestamp;
-    this.emitRoomSync(roomId, room);
+
+    this.server.to(roomId).emit('event_timer_change', {
+      timerEnds: room.timerEnds,
+    });
   }
 
   @SubscribeMessage('command_vote_on_card')
