@@ -12,11 +12,16 @@ export interface ReadyPayload {
   readyState: true;
 }
 
-export interface NewCardPayload {
+export interface CreateCardPayload {
   id: string;
   text: string;
   columnId: string;
   cardId: string;
+}
+
+export interface UpdateCardPayload {
+  cardId: string;
+  text: string;
 }
 
 export interface DeleteCardPayload {
@@ -70,6 +75,7 @@ export interface DeleteActionPointPayload {
 export interface ChangeActionPointOwnerPayload {
   actionPointId: string;
   ownerId: string;
+  text: string;
 }
 
 export interface ChangeCurrentDiscussCardPayload {
