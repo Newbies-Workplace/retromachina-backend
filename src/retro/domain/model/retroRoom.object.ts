@@ -189,11 +189,12 @@ export class RetroRoom {
     }
   }
 
-  changeActionPointOwner(actionPointId: string, newOwnerId: string) {
+  updateActionPoint(actionPointId: string, newOwnerId: string, newText: string) {
     const actionPoint = this.actionPoints.find(
       (actionPoint) => actionPoint.id === actionPointId,
     );
     actionPoint.ownerId = newOwnerId;
+    actionPoint.text = newText;
   }
 
   changeDiscussionCard(cardId: string) {

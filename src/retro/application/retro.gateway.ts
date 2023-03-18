@@ -16,12 +16,12 @@ import {
   DeleteActionPointPayload,
   DeleteCardPayload,
   MoveCardToColumnPayload,
-  NewCardPayload,
+  CreateCardPayload,
   ReadyPayload,
   RemoveVoteOnCardPayload,
   RoomStatePayload,
   VoteOnCardPayload,
-  WriteStatePayload,
+  WriteStatePayload, UpdateCardPayload,
 } from './model/request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -132,8 +132,8 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('command_new_card')
-  async handleNewCard(client: Socket, payload: NewCardPayload) {
+  @SubscribeMessage('command_create_card')
+  async handleNewCard(client: Socket, payload: CreateCardPayload) {
     if (payload.text.trim().length === 0) return;
     if (payload.text.length > 1000) payload.text = payload.text.slice(0, 1000);
 
@@ -153,6 +153,27 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     room.cards.unshift(card);
+
+    this.emitRoomSync(roomId, room);
+  }
+
+  @SubscribeMessage('command_update_card')
+  async handleUpdateCard(client: Socket, payload: UpdateCardPayload) {
+    const roomId = this.users.get(client.id).roomId;
+    const room = this.retroRooms.get(roomId);
+    const roomUser = room.users.get(client.id);
+
+    if (payload.text.trim().length === 0) return;
+    if (payload.text.length > 1000) payload.text = payload.text.slice(0, 1000);
+
+    const cardIndex = room.cards.findIndex(
+      (card) => card.id === payload.cardId && card.authorId === roomUser.userId,
+    );
+    if (cardIndex === -1) {
+      return
+    }
+
+    room.cards[cardIndex].text = payload.text
 
     this.emitRoomSync(roomId, room);
   }
@@ -333,7 +354,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(roomId).emit('event_close_room');
   }
 
-  @SubscribeMessage('command_add_action_point')
+  @SubscribeMessage('command_create_action_point')
   handleAddActionPoint(client: Socket, payload: AddActionPointPayload) {
     if (payload.text.trim().length === 0) {
       return;
@@ -355,7 +376,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitRoomSync(roomId, room);
   }
 
-  @SubscribeMessage('command_change_action_point_owner')
+  @SubscribeMessage('command_update_action_point')
   handleChangeActionPointOwner(
     client: Socket,
     payload: ChangeActionPointOwnerPayload,
@@ -363,7 +384,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomId = this.users.get(client.id).roomId;
     const room = this.retroRooms.get(roomId);
 
-    room.changeActionPointOwner(payload.actionPointId, payload.ownerId);
+    room.updateActionPoint(payload.actionPointId, payload.ownerId, payload.text);
     this.emitRoomSync(roomId, room);
   }
 
