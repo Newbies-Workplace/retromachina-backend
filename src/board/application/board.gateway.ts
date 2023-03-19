@@ -11,8 +11,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ErrorTypes } from '../../retro/application/model/ErrorTypes';
 import { User } from '@prisma/client';
-import { TaskUpdatedEvent } from './model/board.events';
-import { TaskUpdateCommand } from './model/board.commands';
+import { TaskDeletedEvent, TaskUpdatedEvent } from './model/board.events';
+import { TaskDeleteCommand, TaskUpdateCommand } from './model/board.commands';
 
 @Injectable()
 @WebSocketGateway(3001, { cors: true, namespace: 'board' })
@@ -71,12 +71,13 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('command_update_task')
-  async handleMoveCardToColumn(client: Socket, payload: TaskUpdateCommand) {
+  async handleUpdateTask(client: Socket, payload: TaskUpdateCommand) {
     const teamId = this.users.get(client.id).teamId
     const col = await this.prismaService.task.update({
       data: {
         column_id: payload.columnId,
         owner_id: payload.ownerId,
+        description: payload.text,
       },
       where: {
         id: payload.taskId,
@@ -87,9 +88,26 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
       taskId: col.id,
       columnId: col.column_id,
       ownerId: col.owner_id,
+      text: col.description,
     }
 
     this.server.to(teamId).emit('task_updated_event', event)
+  }
+
+  @SubscribeMessage('command_delete_task')
+  async handleDeleteTask(client: Socket, payload: TaskDeleteCommand) {
+    const teamId = this.users.get(client.id).teamId
+    const col = await this.prismaService.task.delete({
+      where: {
+        id: payload.taskId,
+      },
+    })
+
+    const event: TaskDeletedEvent = {
+      taskId: col.id,
+    }
+
+    this.server.to(teamId).emit('task_deleted_event', event)
   }
 
   handleDisconnect(client: Socket) {
