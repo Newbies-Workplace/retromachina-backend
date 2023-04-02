@@ -13,6 +13,8 @@ services:
       MYSQL_DATABASE: retro
     ports:
       - "3306:3306"
+    networks:
+      - retro-back-local
   retro-service:
     build:
       context: ../
@@ -26,8 +28,17 @@ services:
       - CALLBACK_URL
     ports:
       - "3000:3000"
+      - "3001:3001"
+    networks:
+      - retro-back-local
+      - reverse-proxy_global
     depends_on:
       - retro-db
+
+networks:
+  retro-back-local:
+  reverse-proxy_global:
+    external: true
 
 volumes:
   retro-db:
