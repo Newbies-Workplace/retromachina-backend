@@ -11,8 +11,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ErrorTypes } from '../../retro/application/model/ErrorTypes';
 import { User } from '@prisma/client';
-import { TaskDeletedEvent, TaskUpdatedEvent } from './model/board.events';
-import { TaskDeleteCommand, TaskUpdateCommand } from './model/board.commands';
+import { TaskCreatedEvent, TaskDeletedEvent, TaskUpdatedEvent } from './model/board.events';
+import { TaskCreateCommand, TaskDeleteCommand, TaskUpdateCommand } from './model/board.commands';
 
 @Injectable()
 @WebSocketGateway(3001, { cors: true, namespace: 'board' })
@@ -68,6 +68,41 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
     })
 
     client.join(teamId)
+  }
+
+  @SubscribeMessage('command_create_task')
+  async handleCreateTask(client: Socket, payload: TaskCreateCommand) {
+    const teamId = this.users.get(client.id).teamId
+    const col = await this.prismaService.task.create({
+      data: {
+        id: payload.taskId,
+        Column: {
+          connect: {
+            id: payload.columnId,
+          },
+        },
+        User: {
+          connect: {
+            id: payload.ownerId,
+          },
+        },
+        Board: {
+          connect: {
+            team_id: teamId,
+          },
+        },
+        description: payload.text,
+      },
+    })
+
+    const event: TaskCreatedEvent = {
+      taskId: col.id,
+      columnId: col.column_id,
+      ownerId: col.owner_id,
+      text: col.description,
+    }
+
+    this.server.to(teamId).emit('task_created_event', event)
   }
 
   @SubscribeMessage('command_update_task')
