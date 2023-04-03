@@ -6,23 +6,24 @@ import { v4 as uuid } from 'uuid';
 export class RetroRoom {
   users: Map<string, User> = new Map();
 
-  createdDate: Date = new Date();
   roomState: RoomState = 'reflection';
   maxVotes?: number = 3;
   timerEnds?: number = null;
   discussionCardId = null;
-
   cards: Card[] = [];
   votes: Vote[] = [];
+
   actionPoints: ActionPoint[] = [];
+
+  createdDate: Date = new Date();
+  lastDisconnectionDate: Date = new Date();
 
   constructor(
     public id: string,
     public teamId: string,
     public scrumMasterId: string,
     public retroColumns: RetroColumn[],
-  ) {
-  }
+  ) {}
 
   getFrontData() {
     const tempUsers = Array.from(this.users.values());
@@ -113,6 +114,7 @@ export class RetroRoom {
 
     if (result) {
       this.users.delete(result[0]);
+      this.lastDisconnectionDate = new Date();
     }
   }
 
