@@ -32,6 +32,7 @@ import { RoomStateValidator } from './roomstate.validator';
 import { ErrorTypes } from './model/ErrorTypes';
 import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
+import * as dayjs from 'dayjs'
 
 @Injectable()
 @WebSocketGateway(3001, { cors: true, namespace: 'retro' })
@@ -56,6 +57,49 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const retroRoom = new RetroRoom(retroId, teamId, scrumMasterId, columns);
     this.retroRooms.set(retroId, retroRoom);
     return retroRoom;
+  }
+
+  async closeStaleRooms(): Promise<number> {
+    let closedRooms = 0
+
+    for (const [, room] of this.retroRooms) {
+      const isStaleRoom = room.users.size === 0 && dayjs(room.lastDisconnectionDate).add(30, 'm').isBefore(dayjs())
+
+      if (isStaleRoom) {
+        closedRooms += 1;
+        await this.closeRoom(room)
+      }
+    }
+
+    return closedRooms;
+  }
+
+  async closeRoom(room: RetroRoom) {
+    const board = await this.prismaService.board.findUnique({
+      where: {
+        team_id: room.teamId
+      }
+    })
+
+    await this.prismaService.task.createMany({
+      data: room.actionPoints.map((actionPoint) => {
+        return {
+          description: actionPoint.text,
+          owner_id: actionPoint.ownerId,
+          retro_id: room.id,
+          team_id: room.teamId,
+          column_id: board.default_column_id,
+        };
+      }),
+    });
+
+    await this.prismaService.retrospective.update({
+      where: { id: room.id },
+      data: { is_running: false },
+    });
+
+    this.retroRooms.delete(room.id);
+    this.server.to(room.id).emit('event_close_room');
   }
 
   async handleConnection(client: Socket) {
@@ -327,31 +371,7 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return
     }
 
-    const board = await this.prismaService.board.findUnique({
-      where: {
-        team_id: room.teamId
-      }
-    })
-
-    await this.prismaService.task.createMany({
-      data: room.actionPoints.map((actionPoint) => {
-        return {
-          description: actionPoint.text,
-          owner_id: actionPoint.ownerId,
-          retro_id: room.id,
-          team_id: room.teamId,
-          column_id: board.default_column_id,
-        };
-      }),
-    });
-
-    await this.prismaService.retrospective.update({
-      where: { id: room.id },
-      data: { is_running: false },
-    });
-
-    this.retroRooms.delete(roomId);
-    this.server.to(roomId).emit('event_close_room');
+    await this.closeRoom(room)
   }
 
   @SubscribeMessage('command_create_action_point')
