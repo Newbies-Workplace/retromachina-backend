@@ -140,7 +140,11 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (
       userQuery.TeamUsers.length === 0 ||
-      (userQuery.user_type === 'SCRUM_MASTER' && room.scrumMasterId !== user.id)
+      (
+        userQuery.TeamUsers.length === 0 &&
+        userQuery.user_type === 'SCRUM_MASTER' &&
+        room.scrumMasterId !== user.id
+      )
     ) {
       this.doException(
         client,
@@ -422,6 +426,9 @@ export class RetroGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(client: Socket) {
     const user = this.users.get(client.id);
+    if (!user) {
+      return
+    }
     const roomId = user.roomId;
     const room = this.retroRooms.get(user.roomId);
 

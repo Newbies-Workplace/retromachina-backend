@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtGuard } from 'src/auth/jwt/jwt.guard';
 import { RetroService } from '../domain/retro.service';
 import { User } from 'src/auth/jwt/jwtuser.decorator';
@@ -32,6 +42,16 @@ export class RetroController {
   @Post()
   @UseGuards(JwtGuard)
   async createRetro(@User() user: JWTUser, @Body() body: RetroCreateRequest) {
+    const team =  await this.prismaService.team.findFirst({
+      where: {
+        id: body.teamId,
+      },
+    });
+
+    if (user.id !== team.scrum_master_id) {
+      throw new ForbiddenException("User is not team's scrum master")
+    }
+
     const runningRetro = await this.prismaService.retrospective.findFirst({
       where: {
         is_running: true,
