@@ -1,10 +1,11 @@
 # Retromachina backend
 
 ## Key technologies:
-- REST API (teams / users / retros etc.)
-- DB - Prisma 
-- websockets (retros / boards)
-- auth via Google OAuth 2.0
+- NestJS
+- REST API
+- DB (Prisma) 
+- WebSockets (socket.io)
+- Google OAuth 2.0
 - JWT tokens
 
 ## Requirements:
@@ -13,6 +14,10 @@
 
 ## Development
 
+- run:
+  ```bash
+  npm install
+  ```
 - create `.env` file in root directory based on `.env.template`
 - run `docker-compose.local.yaml` using 
   ```bash
