@@ -9,11 +9,11 @@ datasource db {
 }
 
 model Team {
-  id              String @id @default(uuid())
-  name            String
-  scrum_master_id String
+  id       String @id @default(uuid())
+  name     String
+  owner_id String
 
-  User User? @relation(fields: [scrum_master_id], references: [id])
+  Owner User? @relation(fields: [owner_id], references: [id])
 
   TeamUser      TeamUsers[]
   Task          Task[]
@@ -26,6 +26,7 @@ model TeamUsers {
   id      String @id @default(uuid())
   team_id String
   user_id String
+  role    Role   @default(USER)
 
   Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
   User User? @relation(fields: [user_id], references: [id])
@@ -57,7 +58,6 @@ model User {
   nick        String
   email       String @unique
   avatar_link String
-  user_type   Role   @default(USER)
   google_id   String @unique
 
   TeamUsers TeamUsers[]
@@ -93,16 +93,17 @@ model Retrospective {
 }
 
 model Invite {
-  id            String @id @default(uuid())
-  email         String
-  team_id       String
-  from_scrum_id String
+  id      String @id @default(uuid())
+  email   String
+  team_id String
+  from    String
+  role    Role   @default(USER)
 
   Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
-  User User? @relation(fields: [from_scrum_id], references: [id])
+  User User? @relation(fields: [from], references: [id])
 }
 
 enum Role {
   USER
-  SCRUM_MASTER
+  ADMIN
 }

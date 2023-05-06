@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { HttpException, NotFoundException } from '@nestjs/common/exceptions';
+import { NotFoundException } from '@nestjs/common/exceptions';
 import { Team, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
