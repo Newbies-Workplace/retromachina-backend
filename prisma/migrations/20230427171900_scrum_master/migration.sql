@@ -1,12 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `from_scrum_id` on the `Invite` table. All the data in the column will be lost.
-  - You are about to drop the column `user_type` on the `User` table. All the data in the column will be lost.
-  - Added the required column `from` to the `Invite` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `role` to the `TeamUsers` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- DropForeignKey
 ALTER TABLE `Invite` DROP FOREIGN KEY `Invite_from_scrum_id_fkey`;
 
@@ -25,8 +16,8 @@ ALTER TABLE `Team`
 -- AlterTable
 ALTER TABLE `TeamUsers` ADD COLUMN `role` ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER';
 
-INSERT INTO `TeamUsers` (`team_id`, `user_id`, `role`)
-SELECT `team_id`, `user_id`, 'ADMIN' FROM `Team`
+INSERT INTO `TeamUsers` (id, `team_id`, `user_id`, `role`)
+SELECT UUID(), Team.`id`, `owner_id`, 'ADMIN' FROM `Team`
     JOIN `User` ON `User`.`id` = `Team`.`owner_id`;
 
 -- AlterTable
