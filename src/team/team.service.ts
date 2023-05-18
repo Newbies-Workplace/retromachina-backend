@@ -1,33 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { MethodNotAllowedException } from '@nestjs/common/exceptions';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JWTUser } from 'src/auth/jwt/JWTUser';
-import { CreateTeamRequest } from './dto/createTeam.request';
-import { EditTeamRequest } from './dto/editTeam.request';
+import { TeamRequest, EditTeamRequest } from './application/model/team.request';
 import { Team } from '@prisma/client';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TeamService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+  ) {}
 
-  async getTeam(teamID: string) {
-    const team = await this.prismaService.team.findFirst({
-      where: {
-        id: teamID,
-      },
-    });
-
-    if (!team) throw new NotFoundException();
-
-    return team
-  }
-
-  async createTeam(user: JWTUser, createTeamDto: CreateTeamRequest): Promise<Team> {
+  async createTeam(user: JWTUser, createTeamDto: TeamRequest): Promise<Team> {
     const team = await this.prismaService.team.create({
       data: {
         name: createTeamDto.name,
-        scrum_master_id: user.id,
+        owner_id: user.id,
       },
     });
 
@@ -35,6 +23,7 @@ export class TeamService {
       data: {
         team_id: team.id,
         user_id: user.id,
+        role: 'ADMIN',
       },
     });
 
@@ -60,28 +49,17 @@ export class TeamService {
     return team
   }
 
-  async editTeam(user: JWTUser, teamId: string, editTeamDto: EditTeamRequest): Promise<Team> {
-    const team = await this.prismaService.team.findFirst({
-      where: {
-        id: teamId,
-      },
-    });
-
-    if (!team) throw new NotFoundException();
-
-    if (team.scrum_master_id !== user.id)
-      throw new MethodNotAllowedException();
-
+  async editTeam(user: JWTUser, team: Team, editTeamDto: EditTeamRequest): Promise<Team> {
     await this.prismaService.team.update({
       where: {
-        id: teamId,
+        id: team.id,
       },
       data: {
         name: editTeamDto.name,
       },
     });
 
-    // Reset users && leave scrum untouched
+    // Reset users && leave owner untouched
     await this.prismaService.teamUsers.deleteMany({
       where: {
         team_id: team.id,
@@ -103,7 +81,15 @@ export class TeamService {
     return team
   }
 
-  async addUsersToTeamUsers(emails: string[], teamId: string, scrumId: string) {
+  async deleteTeam(team: Team) {
+    await this.prismaService.team.delete({
+      where: {
+        id: team.id,
+      },
+    });
+  }
+
+  private async addUsersToTeamUsers(emails: string[], teamId: string, scrumId: string) {
     for (const email of emails) {
       const user = await this.prismaService.user.findFirst({
         where: {
@@ -116,7 +102,7 @@ export class TeamService {
           data: {
             email: email,
             team_id: teamId,
-            from_scrum_id: scrumId,
+            from: scrumId,
           },
         });
 
@@ -130,13 +116,5 @@ export class TeamService {
         },
       });
     }
-  }
-
-  async deleteTeam(teamId: string) {
-    await this.prismaService.team.delete({
-      where: {
-        id: teamId,
-      },
-    });
   }
 }

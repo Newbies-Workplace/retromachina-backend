@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
 import { RetroGateway } from '../application/retro.gateway';
-import { RetroCreateRequest } from '../application/model/request.interface';
+import { RetroCreateRequest } from '../application/model/retro.request';
 
 @Injectable()
 export class RetroService implements OnModuleInit {
@@ -20,28 +20,9 @@ export class RetroService implements OnModuleInit {
     });
   }
 
-  async getRetroDates(teamId: string) {
-    return this.prismaService.retrospective.findMany({
-      where: {
-        team_id: teamId,
-      },
-      orderBy: {
-        date: 'desc',
-      },
-    });
-  }
-
-  async getRetro(retroId: string) {
-    return this.prismaService.retrospective.findFirst({
-      where: {
-        id: retroId,
-      },
-    });
-  }
-
   async createRetro(userId: string, request: RetroCreateRequest) {
     const retroId = uuid();
-    await this.prismaService.retrospective.create({
+    const retro = await this.prismaService.retrospective.create({
       data: {
         id: retroId,
         date: new Date(),
@@ -67,8 +48,6 @@ export class RetroService implements OnModuleInit {
       }),
     );
 
-    return {
-      retro_id: retroId,
-    };
+    return retro
   }
 }

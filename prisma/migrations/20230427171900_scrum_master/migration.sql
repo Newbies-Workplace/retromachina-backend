@@ -17,6 +17,7 @@ ALTER TABLE `Team`
 ALTER TABLE `TeamUsers` ADD COLUMN `role` ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER';
 
 INSERT INTO `TeamUsers` (id, `team_id`, `user_id`, `role`)
+# todo delete duplicates and add constraint unique(team_id, user_id)
 SELECT UUID(), Team.`id`, `owner_id`, 'ADMIN' FROM `Team`
     JOIN `User` ON `User`.`id` = `Team`.`owner_id`;
 

@@ -1,22 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BoardColumnDto, EditBoardDto } from './application/model/editBoard.dto';
-import { BoardColumn } from '@prisma/client';
+import { Board, BoardColumn } from '@prisma/client';
 
 @Injectable()
 export class BoardService {
   constructor(private prismaService: PrismaService) {}
 
-  async editBoard(teamId: string, boardDto: EditBoardDto) {
-    const board = await this.prismaService.board.findUnique({
-      where: {
-        team_id: teamId,
-      },
-      include: {
-        BoardColumns: true
-      }
-    })
-
+  async editBoard(teamId: string, board: Board & {BoardColumns: BoardColumn[]}, boardDto: EditBoardDto) {
     const deletedColumns: BoardColumn[] = []
     const existingColumns: BoardColumnDto[] = []
     const createdColumns: BoardColumnDto[] = []
