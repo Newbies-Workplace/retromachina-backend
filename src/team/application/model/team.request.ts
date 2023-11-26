@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
+import {Role} from '@prisma/client';
 
 export class TeamRequest {
   @IsNotEmpty()
@@ -7,7 +8,7 @@ export class TeamRequest {
 
   @IsOptional()
   @IsArray()
-  emails?: string[]; //todo add roles
+  users?: TeamUserRequest[];
 }
 
 export class EditTeamRequest {
@@ -15,5 +16,13 @@ export class EditTeamRequest {
   name: string;
 
   @IsArray()
-  emails: string[]; //todo add roles
+  users?: TeamUserRequest[];
+}
+
+export class TeamUserRequest {
+    @IsString()
+    email: string;
+
+    @IsString()
+    role: Role;
 }

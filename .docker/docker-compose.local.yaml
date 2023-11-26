@@ -12,7 +12,7 @@ services:
       MYSQL_ROOT_PASSWORD: retro
       MYSQL_DATABASE: retro
     ports:
-      - "3306:3306"
+      - "3307:3306"
 
 volumes:
   retro-db:

@@ -23,10 +23,11 @@ model Team {
 }
 
 model TeamUsers {
-  id      String @id @default(uuid())
   team_id String
   user_id String
   role    Role   @default(USER)
+
+  @@unique([team_id, user_id])
 
   Team Team? @relation(fields: [team_id], references: [id], onDelete: Cascade)
   User User? @relation(fields: [user_id], references: [id])

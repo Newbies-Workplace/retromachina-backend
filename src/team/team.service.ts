@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { JWTUser } from 'src/auth/jwt/JWTUser';
-import { TeamRequest, EditTeamRequest } from './application/model/team.request';
-import { Team } from '@prisma/client';
-import { v4 as uuid } from 'uuid';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
+import { JWTUser } from "src/auth/jwt/JWTUser";
+import {
+  TeamRequest,
+  EditTeamRequest,
+  TeamUserRequest,
+} from "./application/model/team.request";
+import { Team } from "@prisma/client";
+import { v4 as uuid } from "uuid";
 
 @Injectable()
 export class TeamService {
-  constructor(
-    private prismaService: PrismaService,
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
   async createTeam(user: JWTUser, createTeamDto: TeamRequest): Promise<Team> {
     const team = await this.prismaService.team.create({
@@ -23,11 +25,11 @@ export class TeamService {
       data: {
         team_id: team.id,
         user_id: user.id,
-        role: 'ADMIN',
+        role: "ADMIN",
       },
     });
 
-    const backlogId = uuid()
+    const backlogId = uuid();
 
     await this.prismaService.board.create({
       data: {
@@ -36,20 +38,27 @@ export class TeamService {
         BoardColumns: {
           create: {
             id: backlogId,
-            name: 'Backlog',
-            color: '#1dd7b2',
+            name: "Backlog",
+            color: "#1dd7b2",
             order: 0,
-          }
-        }
-      }
-    })
+          },
+        },
+      },
+    });
 
-    await this.addUsersToTeamUsers(createTeamDto.emails, team.id, user.id);
+    await this.addUsersToTeamUsers(createTeamDto.users, team.id, user.id);
 
-    return team
+    return team;
   }
 
-  async editTeam(user: JWTUser, team: Team, editTeamDto: EditTeamRequest): Promise<Team> {
+  //todo tylko owner może korzystać z tej metody
+  //todo sprawdzić czy usuwany user jest ownerem
+  //todo sprawdzić duplikaty (jeśli user jest już w teamie to nie dodawać go ponownie)
+  async editTeam(
+    user: JWTUser,
+    team: Team,
+    editTeamDto: EditTeamRequest
+  ): Promise<Team> {
     await this.prismaService.team.update({
       where: {
         id: team.id,
@@ -76,9 +85,9 @@ export class TeamService {
     });
 
     // Add users to teamUsers
-    await this.addUsersToTeamUsers(editTeamDto.emails, team.id, user.id);
+    await this.addUsersToTeamUsers(editTeamDto.users, team.id, user.id);
 
-    return team
+    return team;
   }
 
   async deleteTeam(team: Team) {
@@ -89,20 +98,25 @@ export class TeamService {
     });
   }
 
-  private async addUsersToTeamUsers(emails: string[], teamId: string, scrumId: string) {
-    for (const email of emails) {
+  private async addUsersToTeamUsers(
+    requestUsers: TeamUserRequest[],
+    teamId: string,
+    scrumId: string
+  ) {
+    for (const requestUser of requestUsers) {
       const user = await this.prismaService.user.findFirst({
         where: {
-          email: email,
+          email: requestUser.email,
         },
       });
 
       if (!user) {
         await this.prismaService.invite.create({
           data: {
-            email: email,
+            email: requestUser.email,
             team_id: teamId,
             from: scrumId,
+            role: requestUser.role,
           },
         });
 
@@ -113,6 +127,7 @@ export class TeamService {
         data: {
           team_id: teamId,
           user_id: user.id,
+          role: requestUser.role,
         },
       });
     }

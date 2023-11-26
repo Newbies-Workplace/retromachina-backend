@@ -1,12 +1,14 @@
-import { TeamResponse } from '../../../team/application/model/team.response';
+import { TeamResponse } from "../../../team/application/model/team.response";
+import { Role } from "@prisma/client";
 
 export interface UserResponse {
-  id: string
-  nick: string
-  email: string
-  avatar_link: string
+  id: string;
+  nick: string;
+  email: string;
+  avatar_link: string;
 }
 
+//todo add metadata type
 export interface UserWithTeamsResponse extends UserResponse {
-  teams: (TeamResponse & {role: 'USER' | 'ADMIN'})[]
+  teams: (TeamResponse & { role: Role })[];
 }

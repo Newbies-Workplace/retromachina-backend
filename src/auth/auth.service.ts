@@ -41,6 +41,7 @@ export class AuthService {
           data: {
             team_id: invite.team_id,
             user_id: queryUser.id,
+            role: invite.role,
           },
         });
 
