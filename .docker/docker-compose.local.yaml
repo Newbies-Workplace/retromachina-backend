@@ -1,4 +1,7 @@
-version: "3"
+version: '3.4'
+
+name: "retromachina"
+
 
 services:
   retro-db:

@@ -16,10 +16,14 @@ ALTER TABLE `Team`
 -- AlterTable
 ALTER TABLE `TeamUsers` ADD COLUMN `role` ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER';
 
-INSERT INTO `TeamUsers` (id, `team_id`, `user_id`, `role`)
-# todo delete duplicates and add constraint unique(team_id, user_id)
-SELECT UUID(), Team.`id`, `owner_id`, 'ADMIN' FROM `Team`
-    JOIN `User` ON `User`.`id` = `Team`.`owner_id`;
+UPDATE `TeamUsers`
+    SET `role` = 'ADMIN'
+    WHERE id IN (
+        SELECT `TeamUsers`.`id` FROM `TeamUsers`
+            JOIN `Team` ON `Team`.`id` = `TeamUsers`.`team_id`
+            JOIN `User` ON `User`.`id` = `Team`.`owner_id`
+            WHERE `TeamUsers`.`user_id` = `User`.`id`
+    );
 
 -- AlterTable
 ALTER TABLE `User` DROP COLUMN `user_type`;
@@ -29,3 +33,6 @@ ALTER TABLE `Team` ADD CONSTRAINT `Team_owner_id_fkey` FOREIGN KEY (`owner_id`) 
 
 -- AddForeignKey
 ALTER TABLE `Invite` ADD CONSTRAINT `Invite_from_fkey` FOREIGN KEY (`from`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE `TeamUsers` DROP PRIMARY KEY, DROP COLUMN `id`;
+CREATE UNIQUE INDEX `TeamUsers_team_id_user_id_key` ON `TeamUsers`(`team_id`, `user_id`);
