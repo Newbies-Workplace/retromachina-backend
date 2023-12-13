@@ -1,6 +1,6 @@
 import { RoomState } from 'src/retro/application/roomstate.validator';
-import { RoomDataResponse } from '../../application/model/response.interface';
-import { ActionPoint, Card, RetroColumn, User, Vote } from '../../application/model/retroRoom.interface';
+import { RoomSyncEvent } from '../../application/model/retro.events';
+import { ActionPoint, Card, RetroColumn, User, Vote } from './retroRoom.interface';
 import { v4 as uuid } from 'uuid';
 
 export class RetroRoom {
@@ -28,7 +28,7 @@ export class RetroRoom {
   getFrontData() {
     const tempUsers = Array.from(this.users.values());
 
-    const roomData: RoomDataResponse = {
+    const roomData: RoomSyncEvent = {
       id: this.id,
       teamId: this.teamId,
       createdDate: this.createdDate,

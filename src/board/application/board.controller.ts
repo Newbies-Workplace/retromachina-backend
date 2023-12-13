@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { JwtGuard } from '../../auth/jwt/jwt.guard';
 import { User } from '../../auth/jwt/jwtuser.decorator';
 import { JWTUser } from '../../auth/jwt/JWTUser';
@@ -6,6 +6,8 @@ import { EditBoardDto } from './model/editBoard.dto';
 import { BoardService } from '../board.service';
 import { BoardResponse } from './model/board.response';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuthAbilityFactory } from '../../auth/auth.ability';
+import { ForbiddenError, subject } from '@casl/ability';
 
 @Controller('teams')
 export class BoardController {
@@ -13,6 +15,7 @@ export class BoardController {
   constructor(
     private boardService: BoardService,
     private prismaService: PrismaService,
+    private abilityFactory: AuthAbilityFactory,
   ) {}
 
   @UseGuards(JwtGuard)
@@ -22,11 +25,19 @@ export class BoardController {
     @Body() boardDto: EditBoardDto,
     @Param('id') teamId: string,
   ) {
-    if (!user.isScrum) {
-      throw new ForbiddenException()
-    }
+    const board = await this.prismaService.board.findUniqueOrThrow({
+      where: {
+        team_id: teamId,
+      },
+      include: {
+        BoardColumns: true
+      }
+    })
+    const ability = this.abilityFactory.create(user);
 
-    await this.boardService.editBoard(teamId, boardDto)
+    ForbiddenError.from(ability).throwUnlessCan('update', subject('Board', board));
+
+    await this.boardService.editBoard(teamId, board, boardDto)
   }
 
   @UseGuards(JwtGuard)
@@ -35,7 +46,7 @@ export class BoardController {
     @User() user: JWTUser,
     @Param('id') teamId: string,
   ): Promise<BoardResponse> {
-    const board = await this.prismaService.board.findUnique({
+    const board = await this.prismaService.board.findUniqueOrThrow({
       where: {
         team_id: teamId,
       },
@@ -49,10 +60,9 @@ export class BoardController {
         Tasks: true,
       }
     })
+    const ability = this.abilityFactory.create(user);
 
-    if (!board.Team.TeamUser.map(teamUser => teamUser.user_id).includes(user.id)) {
-      throw new ForbiddenException(`User ${user.id} not in team ${teamId}`)
-    }
+    ForbiddenError.from(ability).throwUnlessCan('read', subject('Board', board));
 
     return {
       defaultColumnId: board.default_column_id,

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { JwtStrategy } from 'src/auth/jwt/jwt.strategy';
 import { InvitesController } from './invites.controller';
-import { InvitesService } from './invites.service';
+import { AuthAbilityFactory } from '../auth/auth.ability';
 
 @Module({
   controllers: [InvitesController],
-  providers: [InvitesService, JwtStrategy],
+  providers: [JwtStrategy, AuthAbilityFactory],
 })
 export class InvitesModule {}

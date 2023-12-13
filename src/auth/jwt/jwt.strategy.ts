@@ -17,18 +17,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: Token) {
+  async validate(payload: Token): Promise<JWTUser> {
     const user = await this.prismaService.user.findFirst({
       where: {
         google_id: payload.user.google_id,
       },
+      include: {
+        TeamUsers: {
+          select: {
+            team_id: true,
+            role: true,
+          }
+        }
+      }
     });
 
     if (!user) throw new UnauthorizedException();
 
     return {
-      isScrum: user && user.user_type !== 'USER' ? true : false,
       ...user,
+      teams: user.TeamUsers.map(teamUser => ({
+        id: teamUser.team_id,
+        role: teamUser.role,
+      })),
     };
   }
 }
