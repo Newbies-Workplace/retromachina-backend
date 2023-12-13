@@ -51,9 +51,6 @@ export class TeamService {
     return team;
   }
 
-  //todo tylko owner może korzystać z tej metody
-  //todo sprawdzić czy usuwany user jest ownerem
-  //todo sprawdzić duplikaty (jeśli user jest już w teamie to nie dodawać go ponownie)
   async editTeam(
     user: JWTUser,
     team: Team,

@@ -8,7 +8,6 @@ export interface UserResponse {
   avatar_link: string;
 }
 
-//todo add metadata type
 export interface UserWithTeamsResponse extends UserResponse {
   teams: (TeamResponse & { role: Role })[];
 }
